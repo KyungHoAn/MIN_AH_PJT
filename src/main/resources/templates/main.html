@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>NBA 농구 데이터 다운로드</h1>
+    <form action="#" th:action="@{/mina}" method="post">
+        <label for="year">NBA 년도:</label>
+        <input type="text" id="year" name="year" placeholder="1951-52"/>
+        <button type="submit">Submit</button>
+    </form>
+
+    <form action="#" th:action="@{/mina2}" method="post">
+        <label for="year2">NBA down 2 :</label>
+        <input type="text" id="year2" name="year2" placeholder="2013-14"/>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

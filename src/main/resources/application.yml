@@ -1,0 +1,8 @@
+#spring.application.name=swim
+spring:
+  thymeleaf:
+#    prefix: classpath:/templates/
+    prefix: file:src/main/resources/templates/
+    check-template-location: true
+    suffix: .html
+    cache: false
