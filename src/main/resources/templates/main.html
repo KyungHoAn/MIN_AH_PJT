@@ -6,6 +6,8 @@
 </head>
 <body>
     <h1>NBA 농구 데이터 다운로드</h1>
+    <br>
+    <h3>#1 농구 데이터 다운로드</h3>
     <form action="#" th:action="@{/mina}" method="post">
         <label for="year">NBA 년도:</label>
         <input type="text" id="year" name="year" placeholder="1951-52"/>
@@ -14,19 +16,28 @@
 
     <br>
     <hr>
-
+    <h3>#2 선수별 다운로드</h3>
     <form action="#" th:action="@{/mina2}" method="post">
         <label for="year2">NBA down 2 :</label>
         <input type="text" id="year2" name="year2" placeholder="2013-14"/>
         <button type="submit">Submit</button>
     </form>
 
+<!--    <br>-->
+<!--    <hr>-->
+<!--    <h3>GAME DATA DOWNLOAD (basic) x</h3>-->
+<!--    <form action="#" th:action="@{/mina3}" method="post">-->
+<!--        <label for="year2">NBA down 3 :</label>-->
+<!--        <input type="text" id="year3" name="year3" placeholder="2010-01-01"/>-->
+<!--        <button type="submit">Submit</button>-->
+<!--    </form>-->
+
     <br>
     <hr>
-
-    <form action="#" th:action="@{/mina3}" method="post">
-        <label for="year2">NBA down 3 :</label>
-        <input type="text" id="year3" name="year3" placeholder="???"/>
+    <h3>(PLAYER) GAME DATA DOWNLOAD</h3>
+    <form action="#" th:action="@{/gameData}" method="post">
+        <label for="year4">NBA GAME DATA DOWN :</label>
+        <input type="text" id="year4" name="year4" placeholder="2010-01-01"/>
         <button type="submit">Submit</button>
     </form>
 </body>
