@@ -6,3 +6,5 @@ spring:
     check-template-location: true
     suffix: .html
     cache: false
+server:
+  port: 8383
