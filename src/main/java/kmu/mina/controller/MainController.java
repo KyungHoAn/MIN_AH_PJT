@@ -87,7 +87,7 @@ public class MainController {
 //            for (int i = 0; i < 1; i++) {
                 List<String[]> gameDataList = new ArrayList<>();
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(4000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -283,7 +283,8 @@ public class MainController {
                 for (int j = 0; j < firstRowNumber; j++) {
                     gameDataList.get(j)[4] = firstTable.get(0);
                     gameDataList.get(j)[7] = String.valueOf(awayTeamScore);
-                    if (!gameDataList.get(j)[9].startsWith("D")) {
+                    if(isFirstCharacterDigit(gameDataList.get(j)[9])) {
+//                    if (!gameDataList.get(j)[9].startsWith("D")) {
                         switch (firstTable.size()) {
                             case 7:
                                 gameDataList.get(j)[14] = firstTable.get(5); // OT1
@@ -297,12 +298,12 @@ public class MainController {
                                 gameDataList.get(j)[10] = firstTable.get(1); // Q1
                                 break;
                         }
-                        gameDataList.get(j)[15] = firstTable.get(firstTable.size() - 1);    // TOTAL
-                        gameDataList.get(j)[16] = firstTotalData.get(2);
-                        gameDataList.get(j)[17] = firstTotalData.get(3);
-                        gameDataList.get(j)[18] = firstTotalData.get(4);
-                        gameDataList.get(j)[19] = firstTotalData.get(5);
-                        gameDataList.get(j)[20] = firstTotalData.get(6);
+                        gameDataList.get(j)[15] = firstTable.get(firstTable.size() - 1);    // FINAL
+                        gameDataList.get(j)[16] = firstTotalData.get(2);        // TOTO_FGM
+                        gameDataList.get(j)[17] = firstTotalData.get(3);        // TOT_EGA
+                        gameDataList.get(j)[18] = firstTotalData.get(4);        // TOT_FG%
+                        gameDataList.get(j)[19] = firstTotalData.get(5);        //TOT_3PM
+                        gameDataList.get(j)[20] = firstTotalData.get(6);        //
                         gameDataList.get(j)[21] = firstTotalData.get(7);
                         gameDataList.get(j)[22] = firstTotalData.get(8);
                         gameDataList.get(j)[23] = firstTotalData.get(9);
@@ -325,7 +326,8 @@ public class MainController {
                 for (int j = firstRowNumber; j < gameDataList.size(); j++) {
                     gameDataList.get(j)[4] = secondTable.get(0);
                     gameDataList.get(j)[7] = String.valueOf(homeTeamScore);
-                    if (!gameDataList.get(j)[9].startsWith("D")) {
+                    if(isFirstCharacterDigit(gameDataList.get(j)[9])) {
+//                    if (!gameDataList.get(j)[9].startsWith("D")) {
                         switch (secondTable.size()) {
                             case 7:
                                 gameDataList.get(j)[14] = secondTable.get(5); // OT1
@@ -400,6 +402,14 @@ public class MainController {
             e.printStackTrace();
         }
         return "main";
+    }
+
+    public boolean isFirstCharacterDigit(String value) {
+        if (value != null && value.length() > 0) {
+            char firstChar = value.charAt(0);
+            return Character.isDigit(firstChar);
+        }
+        return false;
     }
 
     @PostMapping("/mina3")
