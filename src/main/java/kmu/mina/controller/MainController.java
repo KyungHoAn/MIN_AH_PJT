@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Controller
 public class MainController {
@@ -34,7 +35,6 @@ public class MainController {
     public String main() {
         return "main";
     }
-
 
     @PostMapping("/gameData")
     @ResponseBody
@@ -54,352 +54,383 @@ public class MainController {
         options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
 
         WebDriver driver = new ChromeDriver(options);
-        driver.get("https://www.nba.com/games?date=" + year); // ex)1946-11-02
+        boolean errorFlagAndStopFlag = false;
+        int successDivCheck = 1;
+        while (!errorFlagAndStopFlag) {
+            driver.get("https://www.nba.com/games?date=" + year); // ex)1946-11-02
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        Workbook workbook = new XSSFWorkbook();
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            Workbook workbook = new XSSFWorkbook();
 
-        /** 클래스 값이 NoDataMessage_base__xUA61 인 요소가 있는지 여부 확인 */
-        boolean isPresent = isElementPresent(driver, By.className("NoDataMessage_base__xUA61"));
-        System.out.println("NoDataMessage_base__xUA61 클래스를 가진 요소가 존재 유무 " + isPresent);
-        if (!isPresent) {
-            WebElement container = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("GamesView_gameCardsContainer__c_9fB")));
-            /** 해당 요소 바로 아래에 있는 div 요소 가져오기 */
-            List<WebElement> divElements = container.findElements(By.xpath("./div"));
+            /** 클래스 값이 NoDataMessage_base__xUA61 인 요소가 있는지 여부 확인 */
+            boolean isPresent = isElementPresent(driver, By.className("NoDataMessage_base__xUA61"));
+            System.out.println("NoDataMessage_base__xUA61 클래스를 가진 요소가 존재 유무 " + isPresent);
+            try {
+                if (!isPresent) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    WebElement container = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("GamesView_gameCardsContainer__c_9fB")));
+                    /** 해당 요소 바로 아래에 있는 div 요소 가져오기 */
+                    List<WebElement> divElements = container.findElements(By.xpath("./div"));
 
-            /** div 요소의 개수 출력 */
-            System.out.println("GAME 개수: " + divElements.size());
+                    /** TEST */
+                    // GamesView_gameCardsContainer__c_9fB 클래스로 식별되는 요소의 바로 아래에 있는 div 태그를 모두 선택하는 XPath
+                    String xpathExpression = "//div[@class='GamesView_gameCardsContainer__c_9fB']/div";
+                    List<WebElement> divElementsTest = driver.findElements(By.xpath(xpathExpression));
 
-            /** excel header :: 쿼터수는 변동이 있을 수 있음 */
-            String[] header = {"Year", "Month", "Day", "Attendance", "TEAM", "HOME (홈)", "AWAY (어웨이)", "L(0)/W(1)", "PLAYER", "MIN", "Q1", "Q2", "Q3", "Q4", "OT1", "FINAL", "TOT_FGM", "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB", "TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF", "PTS", "+/-"};
-            JavascriptExecutor js = (JavascriptExecutor) driver;
 
-            Sheet sheet = workbook.createSheet("NBA GAMES");
-            Row excelRow = sheet.createRow(0);
-            for (int i = 0; i < header.length; i++) {
-                Cell cell = excelRow.createCell(i);
-                cell.setCellValue(header[i]);
-            }
-            List<String[]> excelList = new ArrayList<>();
-            System.out.println("<<<< GAME SEARCH >>>>");
+                    /** div 요소의 개수 출력 */
+                    System.out.println("GAME 개수: " + divElements.size());
+                    System.out.println("GAME TEST 개수: " + divElementsTest.size());
 
-            for (int i = 0; i < divElements.size(); i++) {
+                    /** excel header :: 쿼터수는 변동이 있을 수 있음 */
+                    String[] header = {"Year", "Month", "Day", "Attendance", "TEAM", "HOME (홈)", "AWAY (어웨이)", "L(0)/W(1)", "PLAYER", "MIN", "Q1", "Q2", "Q3", "Q4", "OT1", "OT2", "FINAL", "TOT_FGM", "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB", "TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF", "PTS", "+/-"};
+                    JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                    Sheet sheet = workbook.createSheet("NBA GAMES");
+                    Row excelRow = sheet.createRow(0);
+                    for (int i = 0; i < header.length; i++) {
+                        Cell cell = excelRow.createCell(i);
+                        cell.setCellValue(header[i]);
+                    }
+                    List<String[]> excelList = new ArrayList<>();
+                    System.out.println("<<<< GAME SEARCH >>>>");
+
+                    for (int i = 0; i < divElementsTest.size(); i++) {
 //            for (int i = 0; i < 1; i++) {
-                List<String[]> gameDataList = new ArrayList<>();
-                try {
-                    Thread.sleep(4000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                        List<String[]> gameDataList = new ArrayList<>();
+                        try {
+                            Thread.sleep(4000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
-                /** BOX SCORE CLICK */
+                        /** BOX SCORE CLICK */
 //                WebElement gameCardsContainer = driver.findElement(By.className("GamesView_gameCardsContainer__c_9fB"));
-                WebElement gameCardsContainer = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("GamesView_gameCardsContainer__c_9fB")));
-                WebElement secondGameCardDiv = gameCardsContainer.findElements(By.className("GameCard_gc__UCI46")).get(i);
-                WebElement boxScoreLink2 = secondGameCardDiv.findElement(By.xpath(".//a[contains(text(),'BOX SCORE')]"));
-                js.executeScript("arguments[0].click();", boxScoreLink2);
+                        WebElement gameCardsContainer = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("GamesView_gameCardsContainer__c_9fB")));
+                        WebElement secondGameCardDiv = gameCardsContainer.findElements(By.className("GameCard_gc__UCI46")).get(i);
+                        WebElement boxScoreLink2 = secondGameCardDiv.findElement(By.xpath(".//a[contains(text(),'BOX SCORE')]"));
+                        js.executeScript("arguments[0].click();", boxScoreLink2);
 
-                WebElement firstStatsTableBody = driver.findElement(By.xpath("//div[@class='MaxWidthContainer_mwc__ID5AG']//tbody[@class='StatsTableBody_tbody__uvj_P'][1]"));
-                List<WebElement> rows1 = firstStatsTableBody.findElements(By.tagName("tr"));
+                        WebElement firstStatsTableBody = driver.findElement(By.xpath("//div[@class='MaxWidthContainer_mwc__ID5AG']//tbody[@class='StatsTableBody_tbody__uvj_P'][1]"));
+                        List<WebElement> rows1 = firstStatsTableBody.findElements(By.tagName("tr"));
 //                List<WebElement> rows1 = driver.findElements(By.xpath("//tr"));
 
-                boolean totalFound = false;
-                int firstRowNumber = 0;
+                        boolean totalFound = false;
+                        int firstRowNumber = 0;
 
-                ArrayList<String> firstTotalData = new ArrayList<>();
+                        ArrayList<String> firstTotalData = new ArrayList<>();
 
-                System.out.println("첫번째 TABLE 크롤링 시작 ");
-                for (WebElement webRow : rows1) {
-                    String[] excelData = new String[header.length];
-                    Arrays.fill(excelData, "-");
-                    List<WebElement> columns = webRow.findElements(By.tagName("td"));
-                    int totalNum = 0;
-                    int num = 8;
-                    for (WebElement column : columns) {
-                        String text = column.getText().split("\n")[0];
-                        if (num == 10) {
-                            num = 35;
+                        System.out.println("첫번째 TABLE 크롤링 시작 ");
+                        for (WebElement webRow : rows1) {
+                            String[] excelData = new String[header.length];
+                            Arrays.fill(excelData, "-");
+                            List<WebElement> columns = webRow.findElements(By.tagName("td"));
+                            int totalNum = 0;
+                            int num = 8;
+                            for (WebElement column : columns) {
+                                String text = column.getText().split("\n")[0];
+                                if (num == 10) {
+                                    num = 36;
+                                }
+                                if ("TOTALS".equals(text)) {
+                                    totalFound = true;
+                                }
+                                if (totalFound) {
+                                    firstTotalData.add(totalNum, text);
+                                    totalNum++;
+                                } else {
+                                    excelData[num] = text;
+                                }
+                                num++;
+                            }
+                            if (!totalFound) {
+                                firstRowNumber++;
+                                gameDataList.add(excelData);
+                            }
                         }
-                        if ("TOTALS".equals(text)) {
-                            totalFound = true;
+
+                        System.out.println("1 table : ");
+                        for (String[] array : gameDataList) {
+                            for (String value : array) {
+                                System.out.print(value + " ");
+                            }
+                            System.out.println();
                         }
-                        if (totalFound) {
-                            firstTotalData.add(totalNum, text);
-                            totalNum++;
-                        } else {
-                            excelData[num] = text;
+                        System.out.println("total data : " + firstTotalData);
+                        System.out.println("firstRowNumber : " + firstRowNumber);
+
+                        WebElement secondStatsTableBody = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='MaxWidthContainer_mwc__ID5AG']//tbody[@class='StatsTableBody_tbody__uvj_P'])[2]")));
+                        List<WebElement> rows2 = secondStatsTableBody.findElements(By.tagName("tr"));
+                        ArrayList<String> secondTotalData = new ArrayList<>();
+                        totalFound = false;
+                        int secondRowNumber = 0;
+
+                        System.out.println("second table start > ");
+                        for (WebElement webRow : rows2) {
+                            String[] excelData = new String[header.length];
+                            Arrays.fill(excelData, "-");
+                            List<WebElement> columns = webRow.findElements(By.tagName("td"));
+
+                            int totalNum = 0;
+                            int num = 8;
+                            for (WebElement column : columns) {
+                                String text = column.getText().split("\n")[0];
+                                if (num == 10) {
+                                    num = 36;
+                                }
+                                if ("TOTALS".equals(text)) {
+                                    totalFound = true;
+                                }
+                                if (totalFound) {
+                                    secondTotalData.add(totalNum, text);
+                                    totalNum++;
+                                } else {
+                                    excelData[num] = text;
+                                }
+                                num++;
+                            }
+                            if (!totalFound) {
+                                secondRowNumber++;
+                                gameDataList.add(excelData);
+                            }
                         }
-                        num++;
-                    }
-                    if (!totalFound) {
-                        firstRowNumber++;
-                        gameDataList.add(excelData);
-                    }
-                }
 
-                System.out.println("1 table : ");
-                for (String[] array : gameDataList) {
-                    for (String value : array) {
-                        System.out.print(value + " ");
-                    }
-                    System.out.println();
-                }
-                System.out.println("total data : " + firstTotalData);
-                System.out.println("firstRowNumber : " + firstRowNumber);
-
-                WebElement secondStatsTableBody = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='MaxWidthContainer_mwc__ID5AG']//tbody[@class='StatsTableBody_tbody__uvj_P'])[2]")));
-                List<WebElement> rows2 = secondStatsTableBody.findElements(By.tagName("tr"));
-                ArrayList<String> secondTotalData = new ArrayList<>();
-                totalFound = false;
-                int secondRowNumber = 0;
-
-                System.out.println("second table start > ");
-                for (WebElement webRow : rows2) {
-                    String[] excelData = new String[header.length];
-                    Arrays.fill(excelData, "-");
-                    List<WebElement> columns = webRow.findElements(By.tagName("td"));
-
-                    int totalNum = 0;
-                    int num = 8;
-                    for (WebElement column : columns) {
-                        String text = column.getText().split("\n")[0];
-                        if (num == 10) {
-                            num = 35;
+                        System.out.println("2 table :");
+                        for (String[] array : gameDataList) {
+                            for (String value : array) {
+                                System.out.print(value + " ");
+                            }
+                            System.out.println();
                         }
-                        if ("TOTALS".equals(text)) {
-                            totalFound = true;
+                        System.out.println("second total data : " + secondTotalData);
+                        System.out.println("==> second row number : " + secondRowNumber);
+
+                        System.out.println("===> SUMMARY click ");
+                        WebElement summaryLink = driver.findElement(By.xpath("//a[@class='InnerNavTabLink_link__Qz2Bi' and text()='Summary']"));
+                        js.executeScript("arguments[0].click();", summaryLink);
+
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                        if (totalFound) {
-                            secondTotalData.add(totalNum, text);
-                            totalNum++;
-                        } else {
-                            excelData[num] = text;
-                        }
-                        num++;
-                    }
-                    if (!totalFound) {
-                        secondRowNumber++;
-                        gameDataList.add(excelData);
-                    }
-                }
-
-                System.out.println("2 table :");
-                for (String[] array : gameDataList) {
-                    for (String value : array) {
-                        System.out.print(value + " ");
-                    }
-                    System.out.println();
-                }
-                System.out.println("second total data : " + secondTotalData);
-                System.out.println("==> second row number : " + secondRowNumber);
-
-                System.out.println("===> SUMMARY click ");
-                WebElement summaryLink = driver.findElement(By.xpath("//a[@class='InnerNavTabLink_link__Qz2Bi' and text()='Summary']"));
-                js.executeScript("arguments[0].click();", summaryLink);
-
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                List<WebElement> infoRows = driver.findElements(By.xpath("//div[@class='Block_blockContent__6iJ_n']//div[@class='InfoCard_row__FO1v_']"));
+                        List<WebElement> infoRows = driver.findElements(By.xpath("//div[@class='Block_blockContent__6iJ_n']//div[@class='InfoCard_row__FO1v_']"));
 //                List<WebElement> infoRows = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//div[@class='Block_blockContent__6iJ_n']//div[@class='InfoCard_row__FO1v_']")));
 
-                String attendance = "-";        // 4번째에 들어감
-                /** GAME INFO 각 InfoCard_row__FO1v_ 요소에서 데이터를 추출 */
-                System.out.println("===> GAME INFO data : ");
-                for (WebElement infoRow : infoRows) {
-                    WebElement labelElement = infoRow.findElement(By.xpath(".//div[@class='InfoCard_column__et46d']"));
-                    WebElement valueElement = infoRow.findElement(By.xpath(".//div[@class='InfoCard_column__et46d']/following-sibling::*"));
-                    System.out.print(infoRow.getText() + "\t");
-                    String label = labelElement.getText();
-                    String value = valueElement.getText();
+                        String attendance = "-";        // 4번째에 들어감
+                        /** GAME INFO 각 InfoCard_row__FO1v_ 요소에서 데이터를 추출 */
+                        System.out.println("===> GAME INFO data : ");
+                        for (WebElement infoRow : infoRows) {
+                            WebElement labelElement = infoRow.findElement(By.xpath(".//div[@class='InfoCard_column__et46d']"));
+                            WebElement valueElement = infoRow.findElement(By.xpath(".//div[@class='InfoCard_column__et46d']/following-sibling::*"));
+                            System.out.print(infoRow.getText() + "\t");
+                            String label = labelElement.getText();
+                            String value = valueElement.getText();
 //                    System.out.print("label: " + label + " value: " + value);
-                    if ("Attendance".equals(label)) {
-                        attendance = value;
-                    }
-                }
-                System.out.println("attendance : " + attendance);     // (-) 01-02 값 확인 필요
+                            if ("Attendance".equals(label)) {
+                                attendance = value;
+                            }
+                        }
+                        System.out.println("attendance : " + attendance);     // (-) 01-02 값 확인 필요
 //                try {
 //                    Thread.sleep(5000);
 //                } catch (InterruptedException e) {
 //                    e.printStackTrace();
 //                }
 
-                /** 첫 번째 GameLinescore_table__a1awr 테이블의 tbody 요소를 찾음 */
-                WebElement firstTableBody = driver.findElement(By.xpath("(//table[@class='GameLinescore_table__a1awr'])[1]/tbody"));
+                        /** 첫 번째 GameLinescore_table__a1awr 테이블의 tbody 요소를 찾음 */
+                        WebElement firstTableBody = driver.findElement(By.xpath("(//table[@class='GameLinescore_table__a1awr'])[1]/tbody"));
 //                WebElement firstTableBody = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//table[@class='GameLinescore_table__a1awr'])[1]/tbody")));
-                /** 첫 번째 테이블의 각 행(tr)의 각 열(td) 값을 추출 */
-                List<WebElement> firstRows = firstTableBody.findElements(By.tagName("tr"));
+                        /** 첫 번째 테이블의 각 행(tr)의 각 열(td) 값을 추출 */
+                        List<WebElement> firstRows = firstTableBody.findElements(By.tagName("tr"));
 //                WebElement summaryFirstHeader = driver.findElement(By.xpath("(//table[@class='GameLinescore_table__a1awr'])[1]/thead"));
 //                List<WebElement> headRow = summaryFirstHeader.findElements(By.tagName("tr"));
-                ArrayList<String> firstTable = new ArrayList<>();
-                ArrayList<String> secondTable = new ArrayList<>();
+                        ArrayList<String> firstTable = new ArrayList<>();
+                        ArrayList<String> secondTable = new ArrayList<>();
 
-                int tableRow = 0;
-                for (WebElement row : firstRows) {
-                    System.out.println("==> first table row ");
-                    List<WebElement> cells = row.findElements(By.tagName("td"));
-                    int tableNum = 0;
-                    for (WebElement cell : cells) {
-                        String text = (String) js.executeScript("return arguments[0].innerText;", cell);
-                        System.out.print(text + "\t");
-                        if (tableRow == 0) {
-                            firstTable.add(tableNum, text);
+                        int tableRow = 0;
+                        for (WebElement row : firstRows) {
+                            System.out.println("==> first table row ");
+                            List<WebElement> cells = row.findElements(By.tagName("td"));
+                            int tableNum = 0;
+                            for (WebElement cell : cells) {
+                                String text = (String) js.executeScript("return arguments[0].innerText;", cell);
+                                System.out.print(text + "\t");
+                                if (tableRow == 0) {
+                                    firstTable.add(tableNum, text);
+                                } else {
+                                    secondTable.add(tableNum, text);
+                                }
+                                tableNum++;
+                            }
+                            tableRow++;
+                            System.out.println();
+                        }
+
+                        System.out.println("firstTable : " + firstTable);
+                        System.out.println("secondTable : " + secondTable);
+
+                        for (String[] array : gameDataList) {
+                            array[0] = day[0];
+                            array[1] = day[1];
+                            array[2] = day[2];
+                            array[3] = attendance;
+                            array[5] = secondTable.get(0);  // home team
+                            array[6] = firstTable.get(0);   // away team
+                        }
+
+                        /** array 9번부터 진행 */
+                        int awayTeamScore = Integer.parseInt(firstTable.get(firstTable.size() - 1));
+                        int homeTeamScore = Integer.parseInt(secondTable.get(secondTable.size() - 1));
+                        if (awayTeamScore > homeTeamScore) {
+                            awayTeamScore = 1;
+                            homeTeamScore = 0;
                         } else {
-                            secondTable.add(tableNum, text);
+                            awayTeamScore = 0;
+                            homeTeamScore = 1;
                         }
-                        tableNum++;
-                    }
-                    tableRow++;
-                    System.out.println();
-                }
+                        System.out.println("awayTeamScore: " + awayTeamScore);
+                        System.out.println("homeTeamScore: " + homeTeamScore);
 
-                System.out.println("firstTable : " + firstTable);
-                System.out.println("secondTable : " + secondTable);
-
-                for (String[] array : gameDataList) {
-                    array[0] = day[0];
-                    array[1] = day[1];
-                    array[2] = day[2];
-                    array[3] = attendance;
-                    array[5] = secondTable.get(0);  // home team
-                    array[6] = firstTable.get(0);   // away team
-                }
-
-                /** array 9번부터 진행 */
-                int awayTeamScore = Integer.parseInt(firstTable.get(firstTable.size() - 1));
-                int homeTeamScore = Integer.parseInt(secondTable.get(secondTable.size() - 1));
-                if (awayTeamScore > homeTeamScore) {
-                    awayTeamScore = 1;
-                    homeTeamScore = 0;
-                } else {
-                    awayTeamScore = 0;
-                    homeTeamScore = 1;
-                }
-                System.out.println("awayTeamScore: " + awayTeamScore);
-                System.out.println("homeTeamScore: " + homeTeamScore);
-
-                for (int j = 0; j < firstRowNumber; j++) {
-                    gameDataList.get(j)[4] = firstTable.get(0);
-                    gameDataList.get(j)[7] = String.valueOf(awayTeamScore);
-                    if(isFirstCharacterDigit(gameDataList.get(j)[9])) {
+                        for (int j = 0; j < firstRowNumber; j++) {
+                            gameDataList.get(j)[4] = firstTable.get(0);
+                            gameDataList.get(j)[7] = String.valueOf(awayTeamScore);
+                            if (isFirstCharacterDigit(gameDataList.get(j)[9])) {
 //                    if (!gameDataList.get(j)[9].startsWith("D")) {
-                        switch (firstTable.size()) {
-                            case 7:
-                                gameDataList.get(j)[14] = firstTable.get(5); // OT1
-                            case 6:
-                                gameDataList.get(j)[13] = firstTable.get(4); // Q4
-                            case 5:
-                                gameDataList.get(j)[12] = firstTable.get(3); // Q3
-                            case 4:
-                                gameDataList.get(j)[11] = firstTable.get(2); // Q2
-                            case 3:
-                                gameDataList.get(j)[10] = firstTable.get(1); // Q1
-                                break;
+                                switch (firstTable.size()) {
+                                    case 8:
+                                        gameDataList.get(j)[15] = firstTable.get(6); // OT1
+                                    case 7:
+                                        gameDataList.get(j)[14] = firstTable.get(5); // OT1
+                                    case 6:
+                                        gameDataList.get(j)[13] = firstTable.get(4); // Q4
+                                    case 5:
+                                        gameDataList.get(j)[12] = firstTable.get(3); // Q3
+                                    case 4:
+                                        gameDataList.get(j)[11] = firstTable.get(2); // Q2
+                                    case 3:
+                                        gameDataList.get(j)[10] = firstTable.get(1); // Q1
+                                        break;
+                                }
+                                gameDataList.get(j)[16] = firstTable.get(firstTable.size() - 1);    // FINAL
+                                gameDataList.get(j)[17] = firstTotalData.get(2);        // TOTO_FGM
+                                gameDataList.get(j)[18] = firstTotalData.get(3);        // TOT_EGA
+                                gameDataList.get(j)[19] = firstTotalData.get(4);        // TOT_FG%
+                                gameDataList.get(j)[20] = firstTotalData.get(5);        //TOT_3PM
+                                gameDataList.get(j)[21] = firstTotalData.get(6);        //
+                                gameDataList.get(j)[22] = firstTotalData.get(7);
+                                gameDataList.get(j)[23] = firstTotalData.get(8);
+                                gameDataList.get(j)[24] = firstTotalData.get(9);
+                                gameDataList.get(j)[25] = firstTotalData.get(10);
+                                gameDataList.get(j)[26] = firstTotalData.get(11);
+                                gameDataList.get(j)[27] = firstTotalData.get(12);
+                                gameDataList.get(j)[28] = firstTotalData.get(13);
+                                gameDataList.get(j)[29] = firstTotalData.get(14);
+                                gameDataList.get(j)[30] = firstTotalData.get(15);
+                                gameDataList.get(j)[31] = firstTotalData.get(16);
+                                gameDataList.get(j)[32] = firstTotalData.get(17);
+                                gameDataList.get(j)[33] = firstTotalData.get(18);
+                                gameDataList.get(j)[34] = firstTotalData.get(19);
+                                gameDataList.get(j)[35] = firstTotalData.get(20);
+                            } else {
+                                gameDataList.get(j)[9] = "-";
+                            }
                         }
-                        gameDataList.get(j)[15] = firstTable.get(firstTable.size() - 1);    // FINAL
-                        gameDataList.get(j)[16] = firstTotalData.get(2);        // TOTO_FGM
-                        gameDataList.get(j)[17] = firstTotalData.get(3);        // TOT_EGA
-                        gameDataList.get(j)[18] = firstTotalData.get(4);        // TOT_FG%
-                        gameDataList.get(j)[19] = firstTotalData.get(5);        //TOT_3PM
-                        gameDataList.get(j)[20] = firstTotalData.get(6);        //
-                        gameDataList.get(j)[21] = firstTotalData.get(7);
-                        gameDataList.get(j)[22] = firstTotalData.get(8);
-                        gameDataList.get(j)[23] = firstTotalData.get(9);
-                        gameDataList.get(j)[24] = firstTotalData.get(10);
-                        gameDataList.get(j)[25] = firstTotalData.get(11);
-                        gameDataList.get(j)[26] = firstTotalData.get(12);
-                        gameDataList.get(j)[27] = firstTotalData.get(13);
-                        gameDataList.get(j)[28] = firstTotalData.get(14);
-                        gameDataList.get(j)[29] = firstTotalData.get(15);
-                        gameDataList.get(j)[30] = firstTotalData.get(16);
-                        gameDataList.get(j)[31] = firstTotalData.get(17);
-                        gameDataList.get(j)[32] = firstTotalData.get(18);
-                        gameDataList.get(j)[33] = firstTotalData.get(19);
-                        gameDataList.get(j)[34] = firstTotalData.get(20);
-                    } else {
-                        gameDataList.get(j)[9] = "-";
-                    }
-                }
 
-                for (int j = firstRowNumber; j < gameDataList.size(); j++) {
-                    gameDataList.get(j)[4] = secondTable.get(0);
-                    gameDataList.get(j)[7] = String.valueOf(homeTeamScore);
-                    if(isFirstCharacterDigit(gameDataList.get(j)[9])) {
+                        for (int j = firstRowNumber; j < gameDataList.size(); j++) {
+                            gameDataList.get(j)[4] = secondTable.get(0);
+                            gameDataList.get(j)[7] = String.valueOf(homeTeamScore);
+                            if (isFirstCharacterDigit(gameDataList.get(j)[9])) {
 //                    if (!gameDataList.get(j)[9].startsWith("D")) {
-                        switch (secondTable.size()) {
-                            case 7:
-                                gameDataList.get(j)[14] = secondTable.get(5); // OT1
-                            case 6:
-                                gameDataList.get(j)[13] = secondTable.get(4); // Q4
-                            case 5:
-                                gameDataList.get(j)[12] = secondTable.get(3); // Q3
-                            case 4:
-                                gameDataList.get(j)[11] = secondTable.get(2); // Q2
-                            case 3:
-                                gameDataList.get(j)[10] = secondTable.get(1); // Q1
-                                break;
+                                switch (secondTable.size()) {
+                                    case 8:
+                                        gameDataList.get(j)[15] = secondTable.get(6); // OT2
+                                    case 7:
+                                        gameDataList.get(j)[14] = secondTable.get(5); // OT1
+                                    case 6:
+                                        gameDataList.get(j)[13] = secondTable.get(4); // Q4
+                                    case 5:
+                                        gameDataList.get(j)[12] = secondTable.get(3); // Q3
+                                    case 4:
+                                        gameDataList.get(j)[11] = secondTable.get(2); // Q2
+                                    case 3:
+                                        gameDataList.get(j)[10] = secondTable.get(1); // Q1
+                                        break;
+                                }
+                                gameDataList.get(j)[16] = secondTable.get(secondTable.size() - 1);      // TOTAL
+
+                                gameDataList.get(j)[17] = secondTotalData.get(2);
+                                gameDataList.get(j)[18] = secondTotalData.get(3);
+                                gameDataList.get(j)[19] = secondTotalData.get(4);
+                                gameDataList.get(j)[20] = secondTotalData.get(5);
+                                gameDataList.get(j)[21] = secondTotalData.get(6);
+                                gameDataList.get(j)[22] = secondTotalData.get(7);
+                                gameDataList.get(j)[23] = secondTotalData.get(8);
+                                gameDataList.get(j)[24] = secondTotalData.get(9);
+                                gameDataList.get(j)[25] = secondTotalData.get(10);
+                                gameDataList.get(j)[26] = secondTotalData.get(11);
+                                gameDataList.get(j)[27] = secondTotalData.get(12);
+                                gameDataList.get(j)[28] = secondTotalData.get(13);
+                                gameDataList.get(j)[29] = secondTotalData.get(14);
+                                gameDataList.get(j)[30] = secondTotalData.get(15);
+                                gameDataList.get(j)[31] = secondTotalData.get(16);
+                                gameDataList.get(j)[32] = secondTotalData.get(17);
+                                gameDataList.get(j)[33] = secondTotalData.get(18);
+                                gameDataList.get(j)[34] = secondTotalData.get(19);
+                                gameDataList.get(j)[35] = secondTotalData.get(20);
+                            } else {
+                                gameDataList.get(j)[9] = "-";
+                            }
                         }
-                        gameDataList.get(j)[15] = secondTable.get(secondTable.size() - 1);      // TOTAL
 
-                        gameDataList.get(j)[16] = secondTotalData.get(2);
-                        gameDataList.get(j)[17] = secondTotalData.get(3);
-                        gameDataList.get(j)[18] = secondTotalData.get(4);
-                        gameDataList.get(j)[19] = secondTotalData.get(5);
-                        gameDataList.get(j)[20] = secondTotalData.get(6);
-                        gameDataList.get(j)[21] = secondTotalData.get(7);
-                        gameDataList.get(j)[22] = secondTotalData.get(8);
-                        gameDataList.get(j)[23] = secondTotalData.get(9);
-                        gameDataList.get(j)[24] = secondTotalData.get(10);
-                        gameDataList.get(j)[25] = secondTotalData.get(11);
-                        gameDataList.get(j)[26] = secondTotalData.get(12);
-                        gameDataList.get(j)[27] = secondTotalData.get(13);
-                        gameDataList.get(j)[28] = secondTotalData.get(14);
-                        gameDataList.get(j)[29] = secondTotalData.get(15);
-                        gameDataList.get(j)[30] = secondTotalData.get(16);
-                        gameDataList.get(j)[31] = secondTotalData.get(17);
-                        gameDataList.get(j)[32] = secondTotalData.get(18);
-                        gameDataList.get(j)[33] = secondTotalData.get(19);
-                        gameDataList.get(j)[34] = secondTotalData.get(20);
-                    } else {
-                        gameDataList.get(j)[9] = "-";
+                        for (String[] array : gameDataList) {
+                            for (String value : array) {
+                                System.out.print(value + " ");
+                            }
+                            System.out.println();
+                        }
+                        driver.get("https://www.nba.com/games?date=" + year);
+                        excelList.addAll(gameDataList);
+                        System.out.println("====> success div size :: " + successDivCheck);
+                        successDivCheck++;
+                    }   /** div for 문 종료 */
+                    System.out.println("final div size :: " + successDivCheck);
+
+                    System.out.println("[excel insert]");
+                    int rowNum = 1;
+                    for (String[] rowData : excelList) {
+                        Row row = sheet.createRow(rowNum++);
+                        int colNum = 0;
+                        for (String cellData : rowData) {
+                            Cell cell = row.createCell(colNum++);
+                            cell.setCellValue(cellData);
+                        }
                     }
                 }
 
-                for (String[] array : gameDataList) {
-                    for (String value : array) {
-                        System.out.print(value + " ");
-                    }
-                    System.out.println();
-                }
-                driver.get("https://www.nba.com/games?date=" + year);
-                excelList.addAll(gameDataList);
-            }   /** div for 문 종료 */
+                errorFlagAndStopFlag = true;
+                System.out.println(" !!! excel insert end & download start !!! ");
 
-            System.out.println("[excel insert]");
-            int rowNum = 1;
-            for (String[] rowData : excelList) {
-                Row row = sheet.createRow(rowNum++);
-                int colNum = 0;
-                for (String cellData : rowData) {
-                    Cell cell = row.createCell(colNum++);
-                    cell.setCellValue(cellData);
+                res.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                res.setHeader("Content-disposition", "attachment; filename=" + year + ".xlsx");
+                try {
+                    OutputStream out = res.getOutputStream();
+                    workbook.write(out);
+                    out.flush();
+                    out.close();
+                    workbook.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+            } catch (NoSuchElementException e) {
+                System.out.println("NoSuchElementException : " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Exception : " + e.getMessage());
             }
-        }
-        System.out.println(" !!! excel insert end & download start !!! ");
-
-        res.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        res.setHeader("Content-disposition", "attachment; filename=" + year + ".xlsx");
-        try {
-            OutputStream out = res.getOutputStream();
-            workbook.write(out);
-            out.flush();
-            out.close();
-            workbook.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return "main";
     }
