@@ -89,6 +89,7 @@ public class MainController {
         boolean errorFlagAndStopFlag = false;
         int successDivCheck = 1;
         int divSize = 0;
+        int errorCount = 0;
         while (!errorFlagAndStopFlag) {
 //            driver.get("https://www.nba.com/games?date=" + year); // ex)1946-11-02
             System.out.println("day :: "+year + "-" + String.format("%02d", lastDay));
@@ -450,8 +451,18 @@ public class MainController {
                 errorFlagAndStopFlag = true;
             } catch (NoSuchElementException e) {
                 System.out.println("NoSuchElementException : " + e.getMessage());
+                errorCount++;
+                if (errorCount == 3) {
+                    errorFlagAndStopFlag = true;
+                    return null;
+                }
             } catch (Exception e) {
                 System.out.println("Exception : " + e.getMessage());
+                errorCount++;
+                if (errorCount == 3) {
+                    errorFlagAndStopFlag = true;
+                    return null;
+                }
             }
         }
 
