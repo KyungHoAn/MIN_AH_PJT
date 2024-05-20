@@ -60,6 +60,7 @@
     <input type="text" id="year5" name="year5" placeholder="2010-01"/>
     <!--        <label for="day">DAY :</label>-->
     <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>
+    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>
     <button id="monthBtn" type="button">Submit</button>
 </form>
 </body>
@@ -71,11 +72,13 @@
 
             let number = $('#year5').val();
             let day = $('#day').val();
+            let startNumber = $('#startNumber').val();
 
             console.log('number : ', number);
             console.log('day : ', day);
+            console.log('startNumber : ', startNumber);
 
-            let currentIndex = 1;
+            let currentIndex = Number(startNumber);
 
             function sendRequest(index) {
                     $.ajax({
