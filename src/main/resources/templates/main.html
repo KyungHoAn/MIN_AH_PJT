@@ -2,26 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>NBA</title>
 </head>
 <body>
-    <h1>NBA 농구 데이터 다운로드</h1>
-    <br>
-    <h3>#1 농구 데이터 다운로드</h3>
-    <form action="#" th:action="@{/mina}" method="post">
-        <label for="year">NBA 년도:</label>
-        <input type="text" id="year" name="year" placeholder="1951-52"/>
-        <button type="submit">Submit</button>
-    </form>
 
-    <br>
-    <hr>
-    <h3>#2 선수별 다운로드</h3>
-    <form action="#" th:action="@{/mina2}" method="post">
-        <label for="year2">NBA down 2 :</label>
-        <input type="text" id="year2" name="year2" placeholder="2013-14"/>
-        <button type="submit">Submit</button>
-    </form>
+<h1>NBA 농구 데이터 다운로드</h1>
+<br>
+<!--    <h3>#1 농구 데이터 다운로드</h3>-->
+<!--    <form action="#" th:action="@{/mina}" method="post">-->
+<!--        <label for="year">NBA 년도:</label>-->
+<!--        <input type="text" id="year" name="year" placeholder="1951-52"/>-->
+<!--        <button type="submit">Submit</button>-->
+<!--    </form>-->
+
+<!--    <br>-->
+<!--    <hr>-->
+<!--    <h3> Team DATA DOWNLOAD</h3>-->
+<!--    <form action="#" th:action="@{/team}" method="post">-->
+<!--        <label for="team">NBA GAME DATA DOWN :</label>-->
+<!--        <input type="text" id="team" name="team" placeholder="2010-01-01"/>-->
+<!--        <button type="submit">Submit</button>-->
+<!--    </form>-->
+
+<!--    <br>-->
+<!--    <hr>-->
+<!--    <h3>#2 선수별 다운로드</h3>-->
+<!--    <form action="#" th:action="@{/mina2}" method="post">-->
+<!--        <label for="year2">NBA down 2 :</label>-->
+<!--        <input type="text" id="year2" name="year2" placeholder="2013-14"/>-->
+<!--        <button type="submit">Submit</button>-->
+<!--    </form>-->
 
 <!--    <br>-->
 <!--    <hr>-->
@@ -32,13 +42,80 @@
 <!--        <button type="submit">Submit</button>-->
 <!--    </form>-->
 
-    <br>
-    <hr>
-    <h3>(PLAYER) GAME DATA DOWNLOAD</h3>
-    <form action="#" th:action="@{/gameData}" method="post">
-        <label for="year4">NBA GAME DATA DOWN :</label>
-        <input type="text" id="year4" name="year4" placeholder="2010-01-01"/>
-        <button type="submit">Submit</button>
-    </form>
+<br>
+<hr>
+<h3>(PLAYER) GAME DATA DOWNLOAD</h3>
+<form action="#" th:action="@{/gameData}" method="post">
+    <label for="year4">NBA GAME DATA DOWN :</label>
+    <input type="text" id="year4" name="year4" placeholder="2010-01-01"/>
+    <button type="submit">Submit</button>
+</form>
+
+<br>
+<hr>
+<h3>(미완성 MONTH - PLAYER) GAME DATA DOWNLOAD</h3>
+<!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
+<form id="monthForm">
+    <label for="year5">NBA GAME DATA DOWN :</label>
+    <input type="text" id="year5" name="year5" placeholder="2010-01"/>
+    <!--        <label for="day">DAY :</label>-->
+    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>
+    <button id="monthBtn" type="button">Submit</button>
+</form>
 </body>
+<script src="https://code.jquery.com/jquery-2.2.4.min.js"
+        integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#monthBtn').on('click', function (event) {
+
+            let number = $('#year5').val();
+            let day = $('#day').val();
+
+            console.log('number : ', number);
+            console.log('day : ', day);
+
+            let currentIndex = 1;
+
+            function sendRequest(index) {
+                    $.ajax({
+                        url: '/gameMonthData',
+                        // url: '/test',
+                        type: 'GET',
+                        data: {
+                            year5: number,
+                            day: index
+                        },
+                        xhrFields: {
+                            responseType: 'blob'
+                        },
+                        success: function (data, status, xhr) {
+                            let excelName = number + '-'+index;
+                            console.log("success ::: ")
+                            console.log(data)
+                            let blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                            let link = document.createElement('a');
+                            let url = window.URL.createObjectURL(blob);
+                            link.href = url;
+                            link.download = excelName;
+                            document.body.appendChild(link);
+                            link.click();
+                            setTimeout(function() {
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                            }, 0);
+                            // 성공 시 다음 일(day) 값에 대한 요청 보내기
+                            if (index < day) {
+                                sendRequest(index + 1);
+                            }
+                        },
+                        error: function (res) {
+                            console.error('Request ' + currentIndex + ' failed:');
+                        }
+                    });
+            }
+            sendRequest(currentIndex);
+        })
+    })
+</script>
 </html>
