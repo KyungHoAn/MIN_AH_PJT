@@ -38,37 +38,6 @@ public class MainController {
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
 
-    @GetMapping("/test")
-    @ResponseBody
-    public ResponseEntity<InputStreamResource> getTest(@RequestParam("year5") String year, @RequestParam("day") int lastDay, HttpServletResponse res) throws IOException {
-        System.out.println("====> get TEST controller ");
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Sample Sheet");
-        Row row = sheet.createRow(0);
-        row.createCell(0).setCellValue("Header 1");
-        row.createCell(1).setCellValue("Header 2");
-
-        // 데이터 행 추가
-        Row dataRow = sheet.createRow(1);
-        dataRow.createCell(0).setCellValue("Data 1");
-        dataRow.createCell(1).setCellValue("Data 2");
-
-        // 엑셀 파일을 바이트 배열로 변환
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
-
-        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment; filename=sample.xlsx");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(new InputStreamResource(in));
-    }
-
     @GetMapping("/gameMonthData")
     @ResponseBody
     public ResponseEntity<InputStreamResource> getMonthDownloadGameData(@RequestParam("year5") String year, @RequestParam("day") int lastDay, HttpServletResponse res) throws IOException {
