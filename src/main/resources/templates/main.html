@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<h1>NBA 농구 데이터 다운로드</h1>
+<!--<h1>NBA 농구 데이터 다운로드</h1>-->
 <br>
 <!--    <h3>#1 농구 데이터 다운로드</h3>-->
 <!--    <form action="#" th:action="@{/mina}" method="post">-->
@@ -63,6 +63,20 @@
     <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>
     <button id="monthBtn" type="button">Submit</button>
 </form>
+
+<br>
+<hr style="border: 0; height: 3px;">
+<h3 style="color: deepskyblue">KBL GAME DATA DOWNLOAD</h3>
+<!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
+<!--<form id="kblForm">-->
+<form action="#" th:action="@{/kblGameDownload}" method="post">
+    <label for="kblYear">NBA GAME DATA DOWN :</label>
+    <input type="text" id="kblYear" name="kblYear" placeholder="2023-01"/>
+<!--    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>-->
+<!--    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>-->
+    <button id="kblBtn" type="submit">Submit</button>
+</form>
+
 </body>
 <script src="https://code.jquery.com/jquery-2.2.4.min.js"
         integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -81,42 +95,43 @@
             let currentIndex = Number(startNumber);
 
             function sendRequest(index) {
-                    $.ajax({
-                        url: '/gameMonthData',
-                        // url: '/test',
-                        type: 'GET',
-                        data: {
-                            year5: number,
-                            day: index
-                        },
-                        xhrFields: {
-                            responseType: 'blob'
-                        },
-                        success: function (data, status, xhr) {
-                            let excelName = number + '-'+index;
-                            console.log("success ::: ")
-                            console.log(data)
-                            let blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                            let link = document.createElement('a');
-                            let url = window.URL.createObjectURL(blob);
-                            link.href = url;
-                            link.download = excelName;
-                            document.body.appendChild(link);
-                            link.click();
-                            setTimeout(function() {
-                                document.body.removeChild(link);
-                                window.URL.revokeObjectURL(url);
-                            }, 0);
-                            // 성공 시 다음 일(day) 값에 대한 요청 보내기
-                            if (index < day) {
-                                sendRequest(index + 1);
-                            }
-                        },
-                        error: function (res) {
-                            console.error('Request ' + currentIndex + ' failed:');
+                $.ajax({
+                    url: '/gameMonthData',
+                    // url: '/test',
+                    type: 'GET',
+                    data: {
+                        year5: number,
+                        day: index
+                    },
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    success: function (data, status, xhr) {
+                        let excelName = number + '-' + index;
+                        console.log("success ::: ")
+                        console.log(data)
+                        let blob = new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                        let link = document.createElement('a');
+                        let url = window.URL.createObjectURL(blob);
+                        link.href = url;
+                        link.download = excelName;
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(function () {
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                        }, 0);
+                        // 성공 시 다음 일(day) 값에 대한 요청 보내기
+                        if (index < day) {
+                            sendRequest(index + 1);
                         }
-                    });
+                    },
+                    error: function (res) {
+                        console.error('Request ' + currentIndex + ' failed:');
+                    }
+                });
             }
+
             sendRequest(currentIndex);
         })
     })

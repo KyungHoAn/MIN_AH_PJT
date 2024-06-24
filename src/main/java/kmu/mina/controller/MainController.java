@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class MainController {
@@ -37,6 +39,695 @@ public class MainController {
     }
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
+
+//    @GetMapping("/kblGameDownload")
+    @PostMapping("/kblGameDownload")
+    public ResponseEntity<InputStreamResource> getKblGameDownload(@RequestParam("kblYear") String year) throws IOException {
+        System.out.println("[KBL GAME DATA DOWNLOAD START]");
+        System.out.println("year : "+year);
+        String[] splitDate = year.split("-");
+//        System.out.println("day : "+day);
+        HttpHeaders headers = new HttpHeaders();
+        String excelName;
+
+        Workbook workbook = null;
+        String chromDriver = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
+        System.setProperty("webdriver.chrome.driver", chromDriver);
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-popup-blocking");       // 팝업안띄움
+        options.addArguments("--disable-gpu");                  // gpu 비활성화
+        options.addArguments("--disable-images");
+        options.addArguments("headless");                       // 브라우저 안띄움
+        options.addArguments("--no-sandbox");
+        options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
+
+//        String kblDate = year + "-" + String.format("%02d", day);
+
+        WebDriver driver = new ChromeDriver(options);
+        boolean errorFlagAndStopFlag = false;
+
+//        int errorCount = 0;
+//        while(!errorFlagAndStopFlag) {
+//        }
+//            driver.get("https://m.sports.naver.com/basketball/schedule/index?category=kbl&date=2023-11-02");
+
+        driver.get("https://m.sports.naver.com/basketball/schedule/index?category=kbl&date="+year);
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(2));
+        workbook = new XSSFWorkbook();
+
+        boolean isPresent = isElementPresent(driver, By.className("ScheduleLeagueType_match_list_container__1v4b0"));
+        System.out.println(year + " 경기 유무 : " + isPresent);
+
+        try {
+            if (isPresent) {
+                WebElement container = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("ScheduleLeagueType_match_list_container__1v4b0")));
+                /** 해당 요소 바로 아래에 있는 div 요소 가져오기 */
+                List<WebElement> divElements = container.findElements(By.xpath("./div"));
+                System.out.println("날짜 수: " + divElements.size());
+
+//                String[] header = {"Year", "Month", "Day", "Attendance", "TEAM", "HOME (홈)", "AWAY (어웨이)", "L(0)/W(1)", "PLAYER", "MIN", "Q1", "Q2", "Q3", "Q4", "OT1", "OT2", "FINAL", "TOT_FGM", "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB", "TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF", "PTS", "+/-"};
+                String[] header = {"YEAR", "MONTH", "DAY", "TEAM", "HOME", "AWAY", "L(0)/W(1)", "PLAYER", "POSITION", "MIN", "1Q", "2Q", "3Q", "4Q", "OT1", "OT2", "TOTAL", "SCORE", "TOT_FGM" , "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB",	"TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF"};
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                Sheet sheet = workbook.createSheet("KBL GAMES");
+                Row excelRow = sheet.createRow(0);
+                for (int i=0; i< header.length; i++) {
+                    Cell cell = excelRow.createCell(i);
+                    cell.setCellValue(header[i]);
+                }
+                List<String[]> excelList = new ArrayList<>();
+
+                for (int i = 0; i < divElements.size(); i++) {
+                    WebElement gameCardsContainer = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("ScheduleLeagueType_match_list_container__1v4b0")));
+                    WebElement secondCardContainer = gameCardsContainer.findElements(By.className("ScheduleLeagueType_match_list_group__18ML9")).get(i);
+
+                    WebElement emElement = secondCardContainer.findElement(By.cssSelector(".ScheduleLeagueType_group_title__S2Z_g .ScheduleLeagueType_title__2Kalm"));
+                    String gameDate = emElement.getText();
+                    System.out.println("game 시작 날짜: " + gameDate);
+                    Pattern pattern = Pattern.compile("\\d+일");
+                    Matcher matcher = pattern.matcher(gameDate);
+
+                    String day = "";
+                    if (matcher.find()) {
+                        day = matcher.group().replace("일", "");
+                    }
+                    System.out.println("Extracted day: " + day);
+
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    WebElement thirdCardContainer = secondCardContainer.findElement(By.className("ScheduleLeagueType_match_list__1-n6x"));
+                    List<WebElement> liElements = thirdCardContainer.findElements(By.xpath("./li[contains(@class, 'MatchBox_match_item__3_D0Q') and contains(@class, 'type_end')]"));
+
+                    for (int j = 0; j < liElements.size(); j++) {
+                        WebElement liElement = liElements.get(j);
+                        WebElement recordLink = liElement.findElement(By.cssSelector("a[href*='/record']"));
+                        JavascriptExecutor executor = (JavascriptExecutor) driver;
+                        executor.executeScript("arguments[0].click();", recordLink);
+
+                        List<String[]> gameDataList = new ArrayList<>();
+
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        WebElement teamElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("ScoreBox_title__2jVlJ")));
+
+                        // 팀명 요소에서 홈팀과 원정팀 이름 가져오기
+                        WebElement homeTeamElement = teamElement.findElement(By.className("ScoreBox_home__2uCuR"));
+                        WebElement awayTeamElement = teamElement.findElement(By.className("ScoreBox_away__26sht"));
+
+                        // 팀 이름을 String으로 저장
+                        String homeTeamName = homeTeamElement.getText();
+                        String awayTeamName = awayTeamElement.getText();
+                        System.out.println("homeTeam : " + homeTeamName);
+                        System.out.println("awayTeamName : " + awayTeamName);
+
+                        // 쿼터수
+                        WebElement tableElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.ScoreBox_round__1sOLq table.ScoreBox_board_table__3V6uh")));
+
+                        WebElement firstRow = tableElement.findElement(By.xpath(".//tbody/tr[1]"));
+                        List<WebElement> firstRowCells = firstRow.findElements(By.tagName("td"));
+
+                        WebElement secondRow = tableElement.findElement(By.xpath(".//tbody/tr[2]"));
+                        List<WebElement> secondRowCells = secondRow.findElements(By.tagName("td"));
+
+
+                        String[] homeQ = new String[6];
+                        System.out.println("First Row Values:");
+                        int hqNum = 0;
+                        for (WebElement cell : firstRowCells) {
+                            System.out.println(cell.getText());
+                            homeQ[hqNum] = cell.getText();
+                            hqNum++;
+                        }
+
+                        String[] arrayQ = new String[6];
+                        System.out.println("Second Row Values:");
+                        int aqNum = 0;
+                        for (WebElement cell : secondRowCells) {
+                            System.out.println(cell.getText());
+                            arrayQ[aqNum] = cell.getText();
+                            aqNum++;
+                        }
+
+                        System.out.println("[TOTAL] >> ");
+                        // Total
+                        tableElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.ScoreBox_result__3atD0 table.ScoreBox_board_table__3V6uh")));
+
+                        firstRow = tableElement.findElement(By.xpath(".//tbody/tr[1]"));
+                        firstRowCells = firstRow.findElements(By.tagName("td"));
+
+                        secondRow = tableElement.findElement(By.xpath(".//tbody/tr[2]"));
+                        secondRowCells = secondRow.findElements(By.tagName("td"));
+
+                        int homeTeamScore = 0;
+                        int awayTeamScore = 0;
+                        for (WebElement cell : firstRowCells) {
+                            System.out.println(cell.getText());
+                            homeTeamScore = Integer.parseInt(cell.getText());
+                        }
+                        for (WebElement cell : secondRowCells) {
+                            System.out.println(cell.getText());
+                            awayTeamScore = Integer.parseInt(cell.getText());
+                        }
+                        System.out.println("homeTeamScore : "+homeTeamScore);
+                        System.out.println("homeTeamScore : "+awayTeamScore);
+
+
+                        String finalHomeScore = (homeTeamScore > awayTeamScore) ? "1" : "0";
+                        String finalAwayScore = (awayTeamScore > homeTeamScore) ? "1" : "0";
+                        System.out.println("finalHomeScore : "+ finalHomeScore);
+                        System.out.println("finalAwayScore : "+ finalAwayScore);
+
+                        // KBL 선수 상세 데이터 [2개 Table]
+                        System.out.println("[KBL 선수 상세 데이터 시작]");
+                        // 모든 PlayerRecord_player_record_area__1HO0u div 요소 찾기
+                        List<WebElement> playerRecordDivs = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.className("PlayerRecord_player_record_area__1HO0u")));
+
+//                        ArrayList<String[]> homeTeamPlayer = new ArrayList<>();
+//                        ArrayList<String[]> awayTeamPlayer = new ArrayList<>();
+
+                        String[] excelData;
+
+
+                        boolean homeCheck = true;
+                        // 각 playerRecordDiv 안에 있는 player_list를 처리
+                        for (WebElement playerRecordDiv : playerRecordDivs) {
+                            // player_list 요소 찾기
+                            WebElement playerList = playerRecordDiv.findElement(By.className("player_list"));
+                            List<WebElement> playerItems = playerList.findElements(By.className("PlayerRecord_player_item__16fJR"));
+
+                            int number = 0;
+
+                            // 각 player_item에서 필요한 정보 추출
+                            for (WebElement playerItem : playerItems) {
+                                excelData = new String[header.length];
+                                String playerNumber = playerItem.findElement(By.className("PlayerRecord_number__koWes")).getText(); // 선수 번호
+                                String playerName = playerItem.findElement(By.className("PlayerRecord_name__2aL7m")).getText(); // 선수 이름
+                                String playerPosition = playerItem.findElement(By.className("PlayerRecord_position__1O96P")).getText(); // 선수 포지션
+                                String playerUrl = playerItem.findElement(By.tagName("a")).getAttribute("href");    // 선수 URL
+
+                                // 정보 출력
+                                System.out.println("Number: " + playerNumber);
+                                System.out.println("Name: " + playerName);
+                                System.out.println("Position: " + playerPosition);
+                                System.out.println("URL: " + playerUrl);
+                                System.out.println("------");
+//                                String[] playerData = {playerName, playerPosition};
+                                Arrays.fill(excelData, "-");
+                                excelData[0] = splitDate[0];
+                                excelData[1] = splitDate[1];
+                                excelData[2] = day;
+                                if (homeCheck) {
+                                    excelData[3] = homeTeamName;
+                                    excelData[6] = finalHomeScore;
+                                    excelData[16] = String.valueOf(homeTeamScore);
+                                } else {
+                                    excelData[3] = awayTeamName;
+                                    excelData[6] = finalAwayScore;
+                                    excelData[16] = String.valueOf(awayTeamScore);
+                                }
+                                excelData[4] = homeTeamName;
+                                excelData[5] = awayTeamName;
+                                excelData[7] = playerName;
+                                excelData[8] = playerPosition;
+                                gameDataList.add(excelData);
+                            }
+                            System.out.println("============= TABLE SECTOR =============");
+                            homeCheck = false;
+                        }
+//                        System.out.println("homeTeamData : "+ homeTeamPlayer);
+//                        System.out.println("awayTeamData : "+ awayTeamPlayer);
+                        // Loop through the list and print each String array
+                        for (String[] dataArray : gameDataList) {
+                            System.out.print("Array: ");
+                            for (String data : dataArray) {
+                                System.out.print(data + " ");
+                            }
+                            System.out.println();  // New line for each array
+                        }
+
+
+                        homeCheck = true;
+                        System.out.println("[KBL 선수 이름 데이터 종료 ]");
+
+                        ArrayList<String[]> homeTeamData = new ArrayList<>();
+                        System.out.println("===> home Team Data size : "+homeTeamData.size());
+                        ArrayList<String[]> awayTeamData = new ArrayList<>();
+
+                        // TODO 선수 게임 데이터 가져오기
+                        System.out.println("[KBL 선수별 데이터]");
+                        List<WebElement> tables = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className("PlayerRecord_record_table__52KqA")));
+
+                        js = (JavascriptExecutor) driver;
+                        for (int a = 0; a < tables.size(); a++) {
+                            WebElement table = tables.get(a);
+                            System.out.println("Table " + (a + 1) + ":");
+                            List<WebElement> tbodys = table.findElements(By.tagName("tbody"));
+
+                            for (WebElement tbody : tbodys) {
+                                List<WebElement> rows = tbody.findElements(By.tagName("tr"));
+                                int number = 0;
+
+                                for (WebElement row : rows) {
+                                    List<WebElement> cells = row.findElements(By.tagName("td"));
+                                    String[] homeData = new String[16];
+                                    String[] awayData = new String[16];
+                                    int cellNum = 0;
+                                    for (WebElement cell : cells) {
+                                        String cellText = (String) js.executeScript("return arguments[0].textContent;", cell);
+                                        System.out.print(cellText.trim() + "\t");
+                                        if (homeCheck) {
+                                            homeData[cellNum] = cellText.trim();
+                                        } else {
+                                            awayData[cellNum] = cellText.trim();
+                                        }
+                                        cellNum++;
+                                    }
+                                    if(homeCheck) {
+                                        homeTeamData.add(homeData);
+                                    } else {
+                                        awayTeamData.add(awayData);
+                                    }
+                                    System.out.println();
+                                }
+                                System.out.println("========================================");
+                                homeCheck = false;
+                            }
+                        }
+
+                        System.out.println("[Final Search KBL DATA]");
+                        System.out.println("home data > " + homeTeamData);
+                        System.out.println("away data > " + awayTeamData);
+
+                        System.out.println("home data size : "+ homeTeamData.size());
+                        System.out.println("away data size : "+ awayTeamData.size());
+
+                        int HomeArrayNum = 0;
+                        for (String[] homeArray : homeTeamData) {
+                            int num = 0;
+                            String[] fgmData;
+                            String[] tP;    // 3점
+                            String[] ft;
+                            for(String result : homeArray) {
+                                if(num == 0) {
+                                    gameDataList.get(HomeArrayNum)[9] = result;
+                                }if(num == 1) {
+                                    gameDataList.get(HomeArrayNum)[17] = result;
+                                }if(num == 2) {
+                                    gameDataList.get(HomeArrayNum)[48] = result;
+                                }if(num == 3) {
+                                    gameDataList.get(HomeArrayNum)[49] = result;
+                                }if(num == 4) {
+                                    gameDataList.get(HomeArrayNum)[50] = result;
+                                }if(num == 5) {
+                                    gameDataList.get(HomeArrayNum)[51] = result;
+                                }if(num == 6) {
+                                    fgmData = result.split("/");
+                                    gameDataList.get(HomeArrayNum)[37] = fgmData[0];
+                                    gameDataList.get(HomeArrayNum)[38] = fgmData[1];
+                                }if(num == 7) {
+                                    gameDataList.get(HomeArrayNum)[39] = result;
+                                }if(num == 8) {
+                                    tP = result.split("/");
+                                    gameDataList.get(HomeArrayNum)[40] = tP[0];
+                                    gameDataList.get(HomeArrayNum)[41] = tP[1];
+                                }if(num == 9) {
+                                    gameDataList.get(HomeArrayNum)[42] = result;
+                                }if(num == 10) {
+                                    ft = result.split("/");
+                                    gameDataList.get(HomeArrayNum)[43] = ft[0];
+                                    gameDataList.get(HomeArrayNum)[44] = ft[1];
+                                }if(num == 11) {
+                                    gameDataList.get(HomeArrayNum)[45] = result;
+                                }if(num == 12) {
+                                    gameDataList.get(HomeArrayNum)[46] = result;
+                                }if(num == 13) {
+                                    gameDataList.get(HomeArrayNum)[47] = result;
+                                }if(num == 14) {
+                                    gameDataList.get(HomeArrayNum)[52] = result;
+                                }if(num == 15) {
+                                    gameDataList.get(HomeArrayNum)[53] = result;
+                                }
+                                num ++;
+                            }
+                            HomeArrayNum++;
+                        }
+
+                        int AwayArrayNum = homeTeamData.size();
+                        for (String[] awayArray : awayTeamData) {
+                            int num = 0;
+                            String[] fgmData;
+                            String[] tP;    // 3점
+                            String[] ft;
+                            for(String result : awayArray) {
+                                if(num == 0) {
+                                    gameDataList.get(AwayArrayNum)[9] = result;
+                                }if(num == 1) {
+                                    gameDataList.get(AwayArrayNum)[17] = result;
+                                }if(num == 2) {
+                                    gameDataList.get(AwayArrayNum)[48] = result;
+                                }if(num == 3) {
+                                    gameDataList.get(AwayArrayNum)[49] = result;
+                                }if(num == 4) {
+                                    gameDataList.get(AwayArrayNum)[50] = result;
+                                }if(num == 5) {
+                                    gameDataList.get(AwayArrayNum)[51] = result;
+                                }if(num == 6) {
+                                    fgmData = result.split("/");
+                                    gameDataList.get(AwayArrayNum)[37] = fgmData[0];
+                                    gameDataList.get(AwayArrayNum)[38] = fgmData[1];
+                                }if(num == 7) {
+                                    gameDataList.get(AwayArrayNum)[39] = result;
+                                }if(num == 8) {
+                                    tP = result.split("/");
+                                    gameDataList.get(AwayArrayNum)[40] = tP[0];
+                                    gameDataList.get(AwayArrayNum)[41] = tP[1];
+                                }if(num == 9) {
+                                    gameDataList.get(AwayArrayNum)[42] = result;
+                                }if(num == 10) {
+                                    ft = result.split("/");
+                                    gameDataList.get(AwayArrayNum)[43] = ft[0];
+                                    gameDataList.get(AwayArrayNum)[44] = ft[1];
+                                }if(num == 11) {
+                                    gameDataList.get(AwayArrayNum)[45] = result;
+                                }if(num == 12) {
+                                    gameDataList.get(AwayArrayNum)[46] = result;
+                                }if(num == 13) {
+                                    gameDataList.get(AwayArrayNum)[47] = result;
+                                }if(num == 14) {
+                                    gameDataList.get(AwayArrayNum)[52] = result;
+                                }if(num == 15) {
+                                    gameDataList.get(AwayArrayNum)[53] = result;
+                                }
+                                num ++;
+                            }
+                            AwayArrayNum++;
+                        }
+
+                        System.out.println("=> check >>>>>>>>>>>>>>>>>>>");
+                        for (String[] dataArray : gameDataList) {
+                            System.out.print("Array: ");
+                            for (String data : dataArray) {
+                                System.out.print(data + " ");
+                            }
+                            System.out.println();  // New line for each array
+                        }
+                        System.out.println("=> check >>>>>>>>>>>>>>>>>>>");
+
+                        ArrayList<String> homeTotData = new ArrayList<>();
+                        ArrayList<String> awayTotData = new ArrayList<>();
+                        
+                        if(homeTeamData.size() > 0) {
+                            // Totals
+                            int totalPoints = 0;
+                            int totalORB = 0;
+                            int totalDRB = 0;
+                            int totalAST = 0;
+                            int totalSTL = 0;
+                            int totalBLK = 0;
+                            int totalTO = 0;
+                            int totalPF = 0;
+                            int totalFGM = 0;
+                            int totalFGA = 0;
+                            int total3PM = 0;
+                            int total3PA = 0;
+                            int totalFTM = 0;
+                            int totalFTA = 0;
+
+                            for (String[] playerStats : homeTeamData) {
+                                totalPoints += Integer.parseInt(playerStats[1]);
+                                totalORB += Integer.parseInt(playerStats[12]);  // 공격 리바운드
+                                totalDRB += Integer.parseInt(playerStats[13]);  // 수비 리바운드
+                                totalAST += Integer.parseInt(playerStats[3]);
+                                totalSTL += Integer.parseInt(playerStats[4]);
+                                totalBLK += Integer.parseInt(playerStats[5]);
+                                totalTO += Integer.parseInt(playerStats[14]);
+                                totalPF += Integer.parseInt(playerStats[15]);
+
+                                String[] fg = playerStats[6].split("/");
+                                totalFGM += Integer.parseInt(fg[0]);
+                                totalFGA += Integer.parseInt(fg[1]);
+
+                                String[] threePt = playerStats[8].split("/");
+                                total3PM += Integer.parseInt(threePt[0]);
+                                total3PA += Integer.parseInt(threePt[1]);
+
+                                String[] ft = playerStats[10].split("/");
+                                totalFTM += Integer.parseInt(ft[0]);
+                                totalFTA += Integer.parseInt(ft[1]);
+                            }
+
+                            int totalREB = totalORB + totalDRB;
+                            double totalFGPct = (totalFGM / (double) totalFGA) * 100;
+                            double total3PPct = (total3PM / (double) total3PA) * 100;
+                            double totalFTPct = (totalFTM / (double) totalFTA) * 100;
+
+                            System.out.println("Total PTS: " + totalPoints); // PTS 총 득점 ok
+                            System.out.println("Total ORB: " + totalORB);       // 공격 리바운드의 개수 7
+                            System.out.println("Total DRB: " + totalDRB);       // 수비 리바운드 개수 24
+                            System.out.println("Total REB: " + totalREB);       // 총 리바운드의 개수 (공격 리바운드 + 수비 리바운드)
+                            System.out.println("Total AST: " + totalAST);       // 어시스트의 개수 ok
+                            System.out.println("Total STL: " + totalSTL);       // 스틸의 개수 ok
+                            System.out.println("Total BLK: " + totalBLK);       // 블록의 개수 ok
+                            System.out.println("Total TO: " + totalTO);         // 턴오버의 개수 ok
+                            System.out.println("Total PF: " + totalPF);         // 개인 파울의 개수 ok
+                            System.out.println("Total FGM: " + totalFGM);       // 성공한 야투의 개수 ok
+                            System.out.println("Total FGA: " + totalFGA);       // 총 시도 야투 개수 ok
+                            System.out.println("Total FG%: " + String.format("%.1f", totalFGPct));      // FG % ok
+                            System.out.println("Total 3PM: " + total3PM);       // 성공 3점 슛 ok
+                            System.out.println("Total 3PA: " + total3PA);       // 시도 3점 슛  ok
+                            System.out.println("Total 3P%: " + String.format("%.1f", total3PPct));  // 3P% ok
+                            System.out.println("Total FTM: " + totalFTM);       // 성공 자유투 개수  ok
+                            System.out.println("Total FTA: " + totalFTA);       // 시도 자유투 개수  ok
+                            System.out.println("Total FT%: " + String.format("%.1f", totalFTPct));  // ok
+
+                            System.out.println(homeQ);
+                            System.out.println(homeQ.length);
+                            System.out.println(homeQ[0]);
+                            System.out.println(homeQ[4]);
+                            System.out.println(homeQ[5]);
+
+                            if(homeQ[5] != null) {
+                                System.out.println("is not null");
+                            } else {
+                                System.out.println("is null");
+                            }
+
+
+
+                            // TODO +/- 선수의 출전 시간 동안 팀의 득점 차이는 공식이 없는 것 같다? 나오지 않는 부분인것 같음
+                            // TODO OT1 - OT2 는 나오지 ㅇ낳는 부분인듯
+                            // 순서 : FGM, FGA, FG%, 3PM, 3PA, 3P%, FTM, FTA, FT%, OREB(x), DREB(x), REB, AST, STL, BLK, TO, PF, PTS, +/-(x)
+                            for(int a=0; a<homeTeamData.size(); a++) {
+                                if(homeQ[0] != null) {
+                                    gameDataList.get(a)[10] = homeQ[0];
+                                }if(homeQ[1] != null) {
+                                    gameDataList.get(a)[11] = homeQ[1];
+                                }if(homeQ[2] != null) {
+                                    gameDataList.get(a)[12] = homeQ[2];
+                                }if(homeQ[3] != null) {
+                                    gameDataList.get(a)[13] = homeQ[3];
+                                }
+                                gameDataList.get(a)[18] = String.valueOf(totalFGM);
+                                gameDataList.get(a)[19] = String.valueOf(totalFGA);
+                                gameDataList.get(a)[20] = String.valueOf(totalFGPct);
+                                gameDataList.get(a)[21] = String.valueOf(total3PM);
+                                gameDataList.get(a)[22] = String.valueOf(total3PA);
+                                gameDataList.get(a)[23] = String.valueOf(total3PPct);
+                                gameDataList.get(a)[24] = String.valueOf(totalFTM);
+                                gameDataList.get(a)[25] = String.valueOf(totalFTA);
+                                gameDataList.get(a)[26] = String.valueOf(totalFTPct);
+                                gameDataList.get(a)[27] = String.valueOf(totalORB);
+                                gameDataList.get(a)[28] = String.valueOf(totalDRB);
+                                gameDataList.get(a)[29] = String.valueOf(totalREB);
+                                gameDataList.get(a)[30] = String.valueOf(totalAST);
+                                gameDataList.get(a)[31] = String.valueOf(totalSTL);
+                                gameDataList.get(a)[32] = String.valueOf(totalBLK);
+                                gameDataList.get(a)[33] = String.valueOf(totalTO);
+                                gameDataList.get(a)[34] = String.valueOf(totalPF);
+                                gameDataList.get(a)[35] = String.valueOf(totalPoints);
+                            }
+                        }
+                        
+                        if(awayTeamData.size() > 0) {
+                            // Totals
+                            int totalPoints = 0;
+                            int totalORB = 0;
+                            int totalDRB = 0;
+                            int totalAST = 0;
+                            int totalSTL = 0;
+                            int totalBLK = 0;
+                            int totalTO = 0;
+                            int totalPF = 0;
+                            int totalFGM = 0;
+                            int totalFGA = 0;
+                            int total3PM = 0;
+                            int total3PA = 0;
+                            int totalFTM = 0;
+                            int totalFTA = 0;
+
+                            for (String[] playerStats : awayTeamData) {
+                                totalPoints += Integer.parseInt(playerStats[1]);
+                                totalORB += Integer.parseInt(playerStats[12]);  // 공격 리바운드
+                                totalDRB += Integer.parseInt(playerStats[13]);  // 수비 리바운드
+                                totalAST += Integer.parseInt(playerStats[3]);
+                                totalSTL += Integer.parseInt(playerStats[4]);
+                                totalBLK += Integer.parseInt(playerStats[5]);
+                                totalTO += Integer.parseInt(playerStats[14]);
+                                totalPF += Integer.parseInt(playerStats[15]);
+
+                                String[] fg = playerStats[6].split("/");
+                                totalFGM += Integer.parseInt(fg[0]);
+                                totalFGA += Integer.parseInt(fg[1]);
+
+                                String[] threePt = playerStats[8].split("/");
+                                total3PM += Integer.parseInt(threePt[0]);
+                                total3PA += Integer.parseInt(threePt[1]);
+
+                                String[] ft = playerStats[10].split("/");
+                                totalFTM += Integer.parseInt(ft[0]);
+                                totalFTA += Integer.parseInt(ft[1]);
+                            }
+
+                            int totalREB = totalORB + totalDRB;
+                            double totalFGPct = (totalFGM / (double) totalFGA) * 100;
+                            double total3PPct = (total3PM / (double) total3PA) * 100;
+                            double totalFTPct = (totalFTM / (double) totalFTA) * 100;
+
+                            System.out.println("Total PTS: " + totalPoints); // PTS 총 득점 ok
+                            System.out.println("Total ORB: " + totalORB);       // 공격 리바운드의 개수 7
+                            System.out.println("Total DRB: " + totalDRB);       // 수비 리바운드 개수 24
+                            System.out.println("Total REB: " + totalREB);       // 총 리바운드의 개수 (공격 리바운드 + 수비 리바운드)
+                            System.out.println("Total AST: " + totalAST);       // 어시스트의 개수 ok
+                            System.out.println("Total STL: " + totalSTL);       // 스틸의 개수 ok
+                            System.out.println("Total BLK: " + totalBLK);       // 블록의 개수 ok
+                            System.out.println("Total TO: " + totalTO);         // 턴오버의 개수 ok
+                            System.out.println("Total PF: " + totalPF);         // 개인 파울의 개수 ok
+                            System.out.println("Total FGM: " + totalFGM);       // 성공한 야투의 개수 ok
+                            System.out.println("Total FGA: " + totalFGA);       // 총 시도 야투 개수 ok
+                            System.out.println("Total FG%: " + String.format("%.1f", totalFGPct));      // FG % ok
+                            System.out.println("Total 3PM: " + total3PM);       // 성공 3점 슛 ok
+                            System.out.println("Total 3PA: " + total3PA);       // 시도 3점 슛  ok
+                            System.out.println("Total 3P%: " + String.format("%.1f", total3PPct));  // 3P% ok
+                            System.out.println("Total FTM: " + totalFTM);       // 성공 자유투 개수  ok
+                            System.out.println("Total FTA: " + totalFTA);       // 시도 자유투 개수  ok
+                            System.out.println("Total FT%: " + String.format("%.1f", totalFTPct));  // ok
+
+                            // TODO +/- 선수의 출전 시간 동안 팀의 득점 차이는 공식이 없는 것 같다? 나오지 않는 부분인것 같음
+                            // TODO OT1 - OT2 는 나오지 ㅇ낳는 부분인듯
+                            // 순서 : FGM, FGA, FG%, 3PM, 3PA, 3P%, FTM, FTA, FT%, OREB(x), DREB(x), REB, AST, STL, BLK, TO, PF, PTS, +/-(x)
+                            for(int a=homeTeamData.size(); a<gameDataList.size(); a++) {
+                                if(arrayQ[0] != null) {
+                                    gameDataList.get(a)[10] = arrayQ[0];
+                                }if(arrayQ[1] != null) {
+                                    gameDataList.get(a)[11] = arrayQ[1];
+                                }if(arrayQ[2] != null) {
+                                    gameDataList.get(a)[12] = arrayQ[2];
+                                }if(arrayQ[3] != null) {
+                                    gameDataList.get(a)[13] = arrayQ[3];
+                                }
+                                gameDataList.get(a)[18] = String.valueOf(totalFGM);
+                                gameDataList.get(a)[19] = String.valueOf(totalFGA);
+                                gameDataList.get(a)[20] = String.format("%.1f", totalFGPct);
+                                gameDataList.get(a)[21] = String.valueOf(total3PM);
+                                gameDataList.get(a)[22] = String.valueOf(total3PA);
+                                gameDataList.get(a)[23] =  String.format("%.1f", total3PPct);
+                                gameDataList.get(a)[24] = String.valueOf(totalFTM);
+                                gameDataList.get(a)[25] = String.valueOf(totalFTA);
+                                gameDataList.get(a)[26] = String.format("%.1f", totalFTPct);
+                                gameDataList.get(a)[27] = String.valueOf(totalORB);
+                                gameDataList.get(a)[28] = String.valueOf(totalDRB);
+                                gameDataList.get(a)[29] = String.valueOf(totalREB);
+                                gameDataList.get(a)[30] = String.valueOf(totalAST);
+                                gameDataList.get(a)[31] = String.valueOf(totalSTL);
+                                gameDataList.get(a)[32] = String.valueOf(totalBLK);
+                                gameDataList.get(a)[33] = String.valueOf(totalTO);
+                                gameDataList.get(a)[34] = String.valueOf(totalPF);
+                                gameDataList.get(a)[35] = String.valueOf(totalPoints);
+                            }
+                        }
+
+                        System.out.println("===> total data summary >> ");
+                        System.out.println("=> last check >>>>>>>>>>>>>>>>>>>");
+                        for (String[] dataArray : gameDataList) {
+                            System.out.print("Array: ");
+                            for (String data : dataArray) {
+                                System.out.print(data + " ");
+                            }
+                            System.out.println();  // New line for each array
+                        }
+                        System.out.println("=> last check >>>>>>>>>>>>>>>>>>>");
+
+                        excelList.addAll(gameDataList);
+
+                        driver.navigate().back();
+
+                        try {
+                            Thread.sleep(8000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        System.out.println(" back check 1");
+                        // 페이지 네비게이션 후, thirdCardContainer와 liElements를 다시 찾아 업데이트
+                        System.out.println("==> secondCardContainer => "+ secondCardContainer);
+                        gameCardsContainer = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("ScheduleLeagueType_match_list_container__1v4b0")));
+                        secondCardContainer = gameCardsContainer.findElements(By.className("ScheduleLeagueType_match_list_group__18ML9")).get(i);
+                        thirdCardContainer = secondCardContainer.findElement(By.className("ScheduleLeagueType_match_list__1-n6x"));
+                        System.out.println(" back check 2");
+                        liElements = thirdCardContainer.findElements(By.xpath("./li[contains(@class, 'MatchBox_match_item__3_D0Q') and contains(@class, 'type_end')]"));
+                        System.out.println(" back check 3");
+                    }
+
+                    int rowNum = 1;
+                    for(String[] rowData : excelList) {
+                        Row row = sheet.createRow(rowNum++);
+                        int colNum = 0;
+                        for(String cellData : rowData) {
+                            Cell cell = row.createCell(colNum++);
+                            cell.setCellValue(cellData);
+                        }
+                    }
+                }
+            }
+        } catch (NoSuchElementException e) {
+            System.out.println("ERROR [NoSuchElementException] : " + e.getMessage());
+//            errorCount++;
+//            if(errorCount == 3)
+//                return null;
+        }
+        catch (Exception e) {
+            System.out.println("ERROR : " + e.getMessage());
+//            errorCount++;
+//            if(errorCount == 3)
+//                return null;
+        }
+
+        System.out.println("[KBL excel download started]");
+        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+
+        // 엑셀 파일을 바이트 배열로 변환
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        out.flush();
+        out.close();
+        workbook.close();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
 
     @GetMapping("/gameMonthData")
     @ResponseBody
@@ -1530,7 +2221,6 @@ public class MainController {
             System.out.println();
         }
     }
-
 }
 
 
