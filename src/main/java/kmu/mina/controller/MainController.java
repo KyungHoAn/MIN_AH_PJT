@@ -147,8 +147,6 @@ public class MainController {
                         // 팀 이름을 String으로 저장
                         String homeTeamName = homeTeamElement.getText();
                         String awayTeamName = awayTeamElement.getText();
-                        System.out.println("homeTeam : " + homeTeamName);
-                        System.out.println("awayTeamName : " + awayTeamName);
 
                         // 쿼터수
                         WebElement tableElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.ScoreBox_round__1sOLq table.ScoreBox_board_table__3V6uh")));
@@ -178,7 +176,6 @@ public class MainController {
                             aqNum++;
                         }
 
-                        System.out.println("[TOTAL] >> ");
                         // Total
                         tableElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.ScoreBox_result__3atD0 table.ScoreBox_board_table__3V6uh")));
 
@@ -191,29 +188,20 @@ public class MainController {
                         int homeTeamScore = 0;
                         int awayTeamScore = 0;
                         for (WebElement cell : firstRowCells) {
-                            System.out.println(cell.getText());
                             homeTeamScore = Integer.parseInt(cell.getText());
                         }
                         for (WebElement cell : secondRowCells) {
-                            System.out.println(cell.getText());
                             awayTeamScore = Integer.parseInt(cell.getText());
                         }
-                        System.out.println("homeTeamScore : "+homeTeamScore);
-                        System.out.println("homeTeamScore : "+awayTeamScore);
 
 
                         String finalHomeScore = (homeTeamScore > awayTeamScore) ? "1" : "0";
                         String finalAwayScore = (awayTeamScore > homeTeamScore) ? "1" : "0";
-                        System.out.println("finalHomeScore : "+ finalHomeScore);
-                        System.out.println("finalAwayScore : "+ finalAwayScore);
 
                         // KBL 선수 상세 데이터 [2개 Table]
                         System.out.println("[KBL 선수 상세 데이터 시작]");
                         // 모든 PlayerRecord_player_record_area__1HO0u div 요소 찾기
                         List<WebElement> playerRecordDivs = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.className("PlayerRecord_player_record_area__1HO0u")));
-
-//                        ArrayList<String[]> homeTeamPlayer = new ArrayList<>();
-//                        ArrayList<String[]> awayTeamPlayer = new ArrayList<>();
 
                         String[] excelData;
 
@@ -225,8 +213,6 @@ public class MainController {
                             WebElement playerList = playerRecordDiv.findElement(By.className("player_list"));
                             List<WebElement> playerItems = playerList.findElements(By.className("PlayerRecord_player_item__16fJR"));
 
-                            int number = 0;
-
                             // 각 player_item에서 필요한 정보 추출
                             for (WebElement playerItem : playerItems) {
                                 excelData = new String[header.length];
@@ -236,11 +222,10 @@ public class MainController {
                                 String playerUrl = playerItem.findElement(By.tagName("a")).getAttribute("href");    // 선수 URL
 
                                 // 정보 출력
-                                System.out.println("Number: " + playerNumber);
-                                System.out.println("Name: " + playerName);
-                                System.out.println("Position: " + playerPosition);
-                                System.out.println("URL: " + playerUrl);
-                                System.out.println("------");
+//                                System.out.println("Number: " + playerNumber);
+//                                System.out.println("Name: " + playerName);
+//                                System.out.println("Position: " + playerPosition);
+//                                System.out.println("URL: " + playerUrl);
 //                                String[] playerData = {playerName, playerPosition};
                                 Arrays.fill(excelData, "-");
                                 excelData[0] = splitDate[0];
@@ -264,17 +249,6 @@ public class MainController {
                             System.out.println("============= TABLE SECTOR =============");
                             homeCheck = false;
                         }
-//                        System.out.println("homeTeamData : "+ homeTeamPlayer);
-//                        System.out.println("awayTeamData : "+ awayTeamPlayer);
-                        // Loop through the list and print each String array
-                        for (String[] dataArray : gameDataList) {
-                            System.out.print("Array: ");
-                            for (String data : dataArray) {
-                                System.out.print(data + " ");
-                            }
-                            System.out.println();  // New line for each array
-                        }
-
 
                         homeCheck = true;
                         System.out.println("[KBL 선수 이름 데이터 종료 ]");
@@ -283,7 +257,6 @@ public class MainController {
                         System.out.println("===> home Team Data size : "+homeTeamData.size());
                         ArrayList<String[]> awayTeamData = new ArrayList<>();
 
-                        // TODO 선수 게임 데이터 가져오기
                         System.out.println("[KBL 선수별 데이터]");
                         List<WebElement> tables = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className("PlayerRecord_record_table__52KqA")));
 
@@ -323,13 +296,6 @@ public class MainController {
                                 homeCheck = false;
                             }
                         }
-
-                        System.out.println("[Final Search KBL DATA]");
-                        System.out.println("home data > " + homeTeamData);
-                        System.out.println("away data > " + awayTeamData);
-
-                        System.out.println("home data size : "+ homeTeamData.size());
-                        System.out.println("away data size : "+ awayTeamData.size());
 
                         int HomeArrayNum = 0;
                         for (String[] homeArray : homeTeamData) {
@@ -433,19 +399,6 @@ public class MainController {
                             AwayArrayNum++;
                         }
 
-                        System.out.println("=> check >>>>>>>>>>>>>>>>>>>");
-                        for (String[] dataArray : gameDataList) {
-                            System.out.print("Array: ");
-                            for (String data : dataArray) {
-                                System.out.print(data + " ");
-                            }
-                            System.out.println();  // New line for each array
-                        }
-                        System.out.println("=> check >>>>>>>>>>>>>>>>>>>");
-
-                        ArrayList<String> homeTotData = new ArrayList<>();
-                        ArrayList<String> awayTotData = new ArrayList<>();
-                        
                         if(homeTeamData.size() > 0) {
                             // Totals
                             int totalPoints = 0;
@@ -491,38 +444,24 @@ public class MainController {
                             double total3PPct = (total3PM / (double) total3PA) * 100;
                             double totalFTPct = (totalFTM / (double) totalFTA) * 100;
 
-                            System.out.println("Total PTS: " + totalPoints); // PTS 총 득점 ok
-                            System.out.println("Total ORB: " + totalORB);       // 공격 리바운드의 개수 7
-                            System.out.println("Total DRB: " + totalDRB);       // 수비 리바운드 개수 24
-                            System.out.println("Total REB: " + totalREB);       // 총 리바운드의 개수 (공격 리바운드 + 수비 리바운드)
-                            System.out.println("Total AST: " + totalAST);       // 어시스트의 개수 ok
-                            System.out.println("Total STL: " + totalSTL);       // 스틸의 개수 ok
-                            System.out.println("Total BLK: " + totalBLK);       // 블록의 개수 ok
-                            System.out.println("Total TO: " + totalTO);         // 턴오버의 개수 ok
-                            System.out.println("Total PF: " + totalPF);         // 개인 파울의 개수 ok
-                            System.out.println("Total FGM: " + totalFGM);       // 성공한 야투의 개수 ok
-                            System.out.println("Total FGA: " + totalFGA);       // 총 시도 야투 개수 ok
-                            System.out.println("Total FG%: " + String.format("%.1f", totalFGPct));      // FG % ok
-                            System.out.println("Total 3PM: " + total3PM);       // 성공 3점 슛 ok
-                            System.out.println("Total 3PA: " + total3PA);       // 시도 3점 슛  ok
-                            System.out.println("Total 3P%: " + String.format("%.1f", total3PPct));  // 3P% ok
-                            System.out.println("Total FTM: " + totalFTM);       // 성공 자유투 개수  ok
-                            System.out.println("Total FTA: " + totalFTA);       // 시도 자유투 개수  ok
-                            System.out.println("Total FT%: " + String.format("%.1f", totalFTPct));  // ok
-
-                            System.out.println(homeQ);
-                            System.out.println(homeQ.length);
-                            System.out.println(homeQ[0]);
-                            System.out.println(homeQ[4]);
-                            System.out.println(homeQ[5]);
-
-                            if(homeQ[5] != null) {
-                                System.out.println("is not null");
-                            } else {
-                                System.out.println("is null");
-                            }
-
-
+//                            System.out.println("Total PTS: " + totalPoints); // PTS 총 득점 ok
+//                            System.out.println("Total ORB: " + totalORB);       // 공격 리바운드의 개수 7
+//                            System.out.println("Total DRB: " + totalDRB);       // 수비 리바운드 개수 24
+//                            System.out.println("Total REB: " + totalREB);       // 총 리바운드의 개수 (공격 리바운드 + 수비 리바운드)
+//                            System.out.println("Total AST: " + totalAST);       // 어시스트의 개수 ok
+//                            System.out.println("Total STL: " + totalSTL);       // 스틸의 개수 ok
+//                            System.out.println("Total BLK: " + totalBLK);       // 블록의 개수 ok
+//                            System.out.println("Total TO: " + totalTO);         // 턴오버의 개수 ok
+//                            System.out.println("Total PF: " + totalPF);         // 개인 파울의 개수 ok
+//                            System.out.println("Total FGM: " + totalFGM);       // 성공한 야투의 개수 ok
+//                            System.out.println("Total FGA: " + totalFGA);       // 총 시도 야투 개수 ok
+//                            System.out.println("Total FG%: " + String.format("%.1f", totalFGPct));      // FG % ok
+//                            System.out.println("Total 3PM: " + total3PM);       // 성공 3점 슛 ok
+//                            System.out.println("Total 3PA: " + total3PA);       // 시도 3점 슛  ok
+//                            System.out.println("Total 3P%: " + String.format("%.1f", total3PPct));  // 3P% ok
+//                            System.out.println("Total FTM: " + totalFTM);       // 성공 자유투 개수  ok
+//                            System.out.println("Total FTA: " + totalFTA);       // 시도 자유투 개수  ok
+//                            System.out.println("Total FT%: " + String.format("%.1f", totalFTPct));  // ok
 
                             // TODO +/- 선수의 출전 시간 동안 팀의 득점 차이는 공식이 없는 것 같다? 나오지 않는 부분인것 같음
                             // TODO OT1 - OT2 는 나오지 ㅇ낳는 부분인듯
@@ -603,25 +542,6 @@ public class MainController {
                             double total3PPct = (total3PM / (double) total3PA) * 100;
                             double totalFTPct = (totalFTM / (double) totalFTA) * 100;
 
-                            System.out.println("Total PTS: " + totalPoints); // PTS 총 득점 ok
-                            System.out.println("Total ORB: " + totalORB);       // 공격 리바운드의 개수 7
-                            System.out.println("Total DRB: " + totalDRB);       // 수비 리바운드 개수 24
-                            System.out.println("Total REB: " + totalREB);       // 총 리바운드의 개수 (공격 리바운드 + 수비 리바운드)
-                            System.out.println("Total AST: " + totalAST);       // 어시스트의 개수 ok
-                            System.out.println("Total STL: " + totalSTL);       // 스틸의 개수 ok
-                            System.out.println("Total BLK: " + totalBLK);       // 블록의 개수 ok
-                            System.out.println("Total TO: " + totalTO);         // 턴오버의 개수 ok
-                            System.out.println("Total PF: " + totalPF);         // 개인 파울의 개수 ok
-                            System.out.println("Total FGM: " + totalFGM);       // 성공한 야투의 개수 ok
-                            System.out.println("Total FGA: " + totalFGA);       // 총 시도 야투 개수 ok
-                            System.out.println("Total FG%: " + String.format("%.1f", totalFGPct));      // FG % ok
-                            System.out.println("Total 3PM: " + total3PM);       // 성공 3점 슛 ok
-                            System.out.println("Total 3PA: " + total3PA);       // 시도 3점 슛  ok
-                            System.out.println("Total 3P%: " + String.format("%.1f", total3PPct));  // 3P% ok
-                            System.out.println("Total FTM: " + totalFTM);       // 성공 자유투 개수  ok
-                            System.out.println("Total FTA: " + totalFTA);       // 시도 자유투 개수  ok
-                            System.out.println("Total FT%: " + String.format("%.1f", totalFTPct));  // ok
-
                             // TODO +/- 선수의 출전 시간 동안 팀의 득점 차이는 공식이 없는 것 같다? 나오지 않는 부분인것 같음
                             // TODO OT1 - OT2 는 나오지 ㅇ낳는 부분인듯
                             // 순서 : FGM, FGA, FG%, 3PM, 3PA, 3P%, FTM, FTA, FT%, OREB(x), DREB(x), REB, AST, STL, BLK, TO, PF, PTS, +/-(x)
@@ -657,7 +577,6 @@ public class MainController {
                         }
 
                         System.out.println("===> total data summary >> ");
-                        System.out.println("=> last check >>>>>>>>>>>>>>>>>>>");
                         for (String[] dataArray : gameDataList) {
                             System.out.print("Array: ");
                             for (String data : dataArray) {
@@ -665,7 +584,6 @@ public class MainController {
                             }
                             System.out.println();  // New line for each array
                         }
-                        System.out.println("=> last check >>>>>>>>>>>>>>>>>>>");
 
                         excelList.addAll(gameDataList);
 
@@ -677,15 +595,11 @@ public class MainController {
                             e.printStackTrace();
                         }
 
-                        System.out.println(" back check 1");
                         // 페이지 네비게이션 후, thirdCardContainer와 liElements를 다시 찾아 업데이트
-                        System.out.println("==> secondCardContainer => "+ secondCardContainer);
                         gameCardsContainer = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("ScheduleLeagueType_match_list_container__1v4b0")));
                         secondCardContainer = gameCardsContainer.findElements(By.className("ScheduleLeagueType_match_list_group__18ML9")).get(i);
                         thirdCardContainer = secondCardContainer.findElement(By.className("ScheduleLeagueType_match_list__1-n6x"));
-                        System.out.println(" back check 2");
                         liElements = thirdCardContainer.findElements(By.xpath("./li[contains(@class, 'MatchBox_match_item__3_D0Q') and contains(@class, 'type_end')]"));
-                        System.out.println(" back check 3");
                     }
 
                     int rowNum = 1;
