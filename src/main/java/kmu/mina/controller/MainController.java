@@ -56,7 +56,7 @@ public class MainController {
         options.addArguments("--disable-popup-blocking");       // 팝업안띄움
         options.addArguments("--disable-gpu");                  // gpu 비활성화
         options.addArguments("--disable-images");
-//        options.addArguments("headless");                       // 브라우저 안띄움
+        options.addArguments("headless");                       // 브라우저 안띄움
         options.addArguments("--no-sandbox");
         options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
 
