@@ -78,28 +78,33 @@
 </form>
 
 <br>
-<hr style="border: 0; height: 3px;">
-<h3 style="color: deepskyblue">KBL 공식 홈페이지 GAME DATA DOWNLOAD</h3>
+<h3 style="color: deepskyblue">[미완성] KBL 공식 홈페이지 GAME DATA DOWNLOAD</h3>
 <!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
 <!--<form id="kblForm">-->
 <form action="#" th:action="@{/kblMainDownload}" method="post">
-    <label for="kblMainYear">NBA 공식 홈페이지 다운로드 :</label>
-    <input type="text" id="kblMainYear" name="kblMainYear" placeholder="2023-01"/>
-    <!--    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>-->
-    <!--    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>-->
-    <button id="kblMainBtn" type="submit">Submit</button>
+    <div>KBL 공식 홈페이지 다운로드 : 미완성 </div>
+<!--    <label for="kblMainYear">KBL 공식 홈페이지 다운로드 :</label>-->
+<!--    <input type="text" id="kblMainYear" name="kblMainYear" placeholder="2023-01"/>-->
+<!--    <button id="kblMainBtn" type="submit">Submit</button>-->
 </form>
 
-<br>
-<hr style="border: 0; height: 3px;">
-<h3 style="color: deepskyblue">NBA 선수별 년도 총계 데이터 DOWNLOAD</h3>
+<hr style="height: 3px;">
+<h1>년도별 선수 총합 다운로드 PART</h1>
+<!--<hr style="border: 0; height: 3px;">-->
+<h3 style="color: darkred">NBA 선수별 년도 총계 데이터 DOWNLOAD</h3>
 <form action="#" th:action="@{/nbaPlayerTotalYear}" method="post">
-    <label for="kblMainYear">NBA 공식 홈페이지 다운로드 :</label>
+    <label for="playerYear">NBA 공식 홈페이지 다운로드 :</label>
     <input type="text" id="playerYear" name="playerYear" placeholder="2023-24"/>
-    <!--    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>-->
-    <!--    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>-->
     <button type="submit">Submit</button>
 </form>
+
+<h3 style="color: darkred">KBL 선수별 년도 총계 데이터 DOWNLOAD</h3>
+<form action="#" th:action="@{/kblPlayerTotalYear}" method="post">
+    <label for="kblPlayerYear">KBL 공식 홈페이지 다운로드 :</label>
+    <input type="text" id="kblPlayerYear" name="kblPlayerYear" placeholder="2023-2024"/>
+    <button type="submit">Submit</button>
+</form>
+<br>
 
 </body>
 <script src="https://code.jquery.com/jquery-2.2.4.min.js"

@@ -56,7 +56,7 @@ public class MainController {
         options.addArguments("--disable-popup-blocking");       // 팝업안띄움
         options.addArguments("--disable-gpu");                  // gpu 비활성화
         options.addArguments("--disable-images");
-        options.addArguments("headless");                       // 브라우저 안띄움
+//        options.addArguments("headless");                       // 브라우저 안띄움
         options.addArguments("--no-sandbox");
         options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
 
@@ -66,7 +66,7 @@ public class MainController {
 
         driver.get("https://www.nba.com/stats/players/traditional?PerMode=Totals&SeasonType=Regular+Season");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
         workbook = new XSSFWorkbook();
 
         System.out.println("[KBL 공식 game download start");
@@ -97,6 +97,12 @@ public class MainController {
 
             // "2022-23" 옵션 선택
             select.selectByVisibleText(year);
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             // Pagination의 Next Page Button을 찾기 위해 대기
             WebElement nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));

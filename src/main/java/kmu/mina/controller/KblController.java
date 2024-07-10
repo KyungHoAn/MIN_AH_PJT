@@ -39,6 +39,142 @@ public class KblController {
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
 
+
+    @PostMapping("/kblPlayerTotalYear")
+    public ResponseEntity<InputStreamResource> getKblPlayerTotalYear(@RequestParam("kblPlayerYear") String year) throws Exception {
+        System.out.println("[KBL 선수 년도별 총합 데이터 다운로드]");
+        System.out.println("year: "+year);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        Workbook workbook = null;
+        System.setProperty("webdriver.chrome.driver", driverPath);
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-popup-blocking");       // 팝업안띄움
+        options.addArguments("--disable-gpu");                  // gpu 비활성화
+        options.addArguments("--disable-images");
+        options.addArguments("headless");                       // 브라우저 안띄움
+        options.addArguments("--no-sandbox");
+        options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
+
+//        String kblDate = year + "-" + String.format("%02d", day);
+
+        WebDriver driver = new ChromeDriver(options);
+
+        driver.get("https://kbl.or.kr/game/archive-player");
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
+        workbook = new XSSFWorkbook();
+
+        System.out.println("[KBL 공식 game download start");
+        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+
+        try {
+            System.out.println("try - catch");
+//            Rank 	PLAYER 	TEAM	PTS	FGM	FGA	FG%	FTA	FTA	FT%	PP	PPA	PP%	OFF	DEF	TOT	AST	TO 	STL	BS	PF
+            String[] header = {"Rank","PLAYER","TEAM","PTS","FGM","FGA","FG%","FT","FTA","FT%","PP","PPA","PP%","OFF","DEF","TOT","AST","TO","STL","BS","PF"};
+
+            Sheet sheet = workbook.createSheet("KBL PLAYER_YEAR");
+            Row excelRow = sheet.createRow(0);
+
+            for(int i=0; i<header.length; i++) {
+                Cell cell = excelRow.createCell(i);
+                cell.setCellValue(header[i]);
+            }
+
+            List<String[]> excelList = new ArrayList<>();
+
+            // 두 번째 <li> 요소의 <select> 태그 찾기
+            WebElement secondSelect = driver.findElement(By.xpath("//ul[@class='filter-wrap']/li[2]/select"));
+
+            // Select 객체 생성 및 해당 옵션 선택
+            Select select = new Select(secondSelect);
+            select.selectByValue(year);
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 테이블의 tbody 요소 찾기
+            WebElement tbody = driver.findElement(By.cssSelector("div.archive-player-table01 table tbody"));
+
+            // tbody 안의 모든 tr 요소 찾기
+            List<WebElement> rows = tbody.findElements(By.tagName("tr"));
+
+            // 각 행(tr)을 순회하면서 열(td) 값 출력
+            for (WebElement row : rows) {
+                List<WebElement> columns = row.findElements(By.tagName("td"));
+                String[] cellData = new String[header.length];
+                int i=0;
+                for (WebElement column : columns) {
+//                    System.out.print(column.getText() + "\t");
+                    cellData[i] = column.getText();
+                    i++;
+                }
+//                System.out.println();
+                excelList.add(cellData);
+            }
+
+            System.out.println("===> main part ");
+
+            // 테이블의 tbody 요소 찾기
+            WebElement tbodyMain = driver.findElement(By.cssSelector("div.top-scroll-table.archive-player-table01 table tbody"));
+
+            // tbody 안의 모든 tr 요소 찾기
+            List<WebElement> rowsMain = tbodyMain.findElements(By.tagName("tr"));
+
+            // 각 행(tr)을 순회하면서 열(td) 값 출력
+            int a = 0;
+            for (WebElement row : rowsMain) {
+                List<WebElement> columns = row.findElements(By.tagName("td"));
+                int i=3;
+                for (WebElement column : columns) {
+//                    System.out.print(column.getText() + "\t");
+                    excelList.get(a)[i] = column.getText();
+                    i++;
+                }
+//                System.out.println();
+                a++;
+            }
+
+            System.out.println("final >>>>> ");
+
+            int rowNum = 1;
+            for(String[] data : excelList) {
+                Row row = sheet.createRow(rowNum++);
+                int colNum = 0;
+                for(String colum : data) {
+                    Cell cell = row.createCell(colNum++);
+                    cell.setCellValue(colum);
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("[ERROR] : "+e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("[KBL 년도별 선수 데이터 다운로드");
+        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+
+        // 엑셀 파일을 바이트 배열로 변환
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        out.flush();
+        out.close();
+        workbook.close();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
+
     @PostMapping("/kblMainDownload")
     public ResponseEntity<InputStreamResource> getKblMainDownload(@RequestParam("kblMainYear") String year) throws IOException {
         System.out.println("[KBL 공식 hoem page game download]");
@@ -57,7 +193,7 @@ public class KblController {
         options.addArguments("--disable-popup-blocking");       // 팝업안띄움
         options.addArguments("--disable-gpu");                  // gpu 비활성화
         options.addArguments("--disable-images");
-//        options.addArguments("headless");                       // 브라우저 안띄움
+        options.addArguments("headless");                       // 브라우저 안띄움
         options.addArguments("--no-sandbox");
         options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
 
