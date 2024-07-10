@@ -69,7 +69,7 @@ public class MainController {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
         workbook = new XSSFWorkbook();
 
-        System.out.println("[KBL 공식 game download start");
+        System.out.println("[NBA 공식 game download start");
         headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
         
         try {

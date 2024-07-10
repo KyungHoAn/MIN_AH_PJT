@@ -93,6 +93,13 @@ public class KblController {
             Select select = new Select(secondSelect);
             select.selectByValue(year);
 
+            // 구분 선택
+            WebElement lastLi = driver.findElement(By.cssSelector("ul.filter-wrap > li:last-child"));
+            WebElement selectElement = lastLi.findElement(By.tagName("select"));
+            Select selectAccum = new Select(selectElement);
+
+            selectAccum.selectByValue("accum");
+
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
