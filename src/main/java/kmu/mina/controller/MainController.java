@@ -41,8 +41,152 @@ public class MainController {
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
 
+    @PostMapping("nbaOfficialYear")
+    public ResponseEntity<InputStreamResource> getNbaOfficialYear(@RequestParam("officialYear") String year) throws Exception {
+        System.out.println("[NBA Official year 데이터 다운로드 PART]");
+        System.out.println("year: "+year);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        Workbook workbook = null;
+        System.setProperty("webdriver.chrome.driver", driverPath);
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-popup-blocking");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--disable-images");
+        options.addArguments("headless");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--blink-settings=imagesEnabled=false");
+
+        WebDriver driver = new ChromeDriver(options);
+
+        driver.get("https://www.nba.com/stats/leaders?SeasonType=Regular+Season&PerMode=Totals");
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
+        workbook = new XSSFWorkbook();
+
+        System.out.println("[NBA Official game download start");
+        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+
+        try {
+            System.out.println("예외처리");
+//            PLAYER	TEAM	GP	MIN	PTS	FGM	FGA	FG%	3PM	3PA	3P%	FTM	FTA	FT%	OREB	DREB	REB	AST	STL	BLK	TOV	PF	EFF	AST/TOV	STL/TOV
+            String[] header = {"NUMBER","PLAYER","TEAM","GP","MIN","PTS","FGM","FGA","FG%","3PM","3PA","3P%","FTM","FTA","FT%","OREB","DREB","REB","AST","STL","BLK","TOV","PF","EFF","AST/TOV","STL/TOV"};
+
+            Sheet sheet = workbook.createSheet("KBL Official_YEAR");
+            Row excelRow = sheet.createRow(0);
+
+            for(int i=0; i<header.length; i++) {
+                Cell cell = excelRow.createCell(i);
+                cell.setCellValue(header[i]);
+            }
+
+            List<String[]> excelList = new ArrayList<>();
+
+            WebElement firstSelectElement = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("select.DropDown_select__4pIg9")));
+            Select select = new Select(firstSelectElement);
+            select.selectByVisibleText(year);
+
+            WebElement nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+
+            System.out.println("nextPageButton : "+nextPageButton.isEnabled());
+            while (isNextPageButtonEnabled(nextPageButton)) {
+                WebElement tbody;
+                try {
+                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+                } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+                }
+
+                List<WebElement> rows = tbody.findElements(By.tagName("tr"));
+                for (WebElement row : rows) {
+                    List<WebElement> cells = row.findElements(By.tagName("td"));
+                    String[] cellData = new String[header.length];
+                    int i=0;
+                    for (WebElement cell : cells) {
+                        cellData[i] = cell.getText();
+                        i++;
+                    }
+                    System.out.println("num: "+i);
+                    excelList.add(cellData);
+                }
+                WebElement nextPageButtonFind = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+                nextPageButtonFind.click();
+
+                try {
+                    nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+                } catch (org.openqa.selenium.TimeoutException ex) {
+                    break;
+                }
+            }
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            WebElement tbodyLast;
+            try {
+                tbodyLast = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                tbodyLast = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+            }
+
+            List<WebElement> rows = tbodyLast.findElements(By.tagName("tr"));
+            for (WebElement row : rows) {
+                List<WebElement> cells = row.findElements(By.tagName("td"));
+                String[] cellData = new String[header.length];
+                int i = 0;
+                for (WebElement cell : cells) {
+                    cellData[i] = cell.getText();
+                    i++;
+                }
+                System.out.println("num : "+i);
+                excelList.add(cellData);
+            }
+
+            int rowNum = 1;
+            for(String[] rowData : excelList){
+                Row row = sheet.createRow(rowNum++);
+                int colNum = 0;
+                for(String cellData : rowData) {
+                    Cell cell = row.createCell(colNum++);
+                    cell.setCellValue(cellData);
+                }
+            }
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            System.out.println("[ERROR] :" + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("[NBA Official year 데이터 다운로드]");
+        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        out.flush();
+        out.close();
+        workbook.close();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
+
     @PostMapping("/nbaPlayerTotalYear")
-    public ResponseEntity<InputStreamResource> getNbaPalyerTotalYear(@RequestParam("playerYear") String year) throws Exception {
+    public ResponseEntity<InputStreamResource> getNbaPlayerTotalYear(@RequestParam("playerYear") String year) throws Exception {
         System.out.println("[NBA 선수 년도별 총합 데이터 다운로드]");
         System.out.println("year: "+year);
 
@@ -87,7 +231,6 @@ public class MainController {
             }
 
             List<String[]> excelList = new ArrayList<>();
-
 
             // 첫 번째 select 요소 찾기
             WebElement firstSelectElement = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("select.DropDown_select__4pIg9")));

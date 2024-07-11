@@ -200,7 +200,7 @@ public class KblController {
         options.addArguments("--disable-popup-blocking");       // 팝업안띄움
         options.addArguments("--disable-gpu");                  // gpu 비활성화
         options.addArguments("--disable-images");
-        options.addArguments("headless");                       // 브라우저 안띄움
+//        options.addArguments("headless");                       // 브라우저 안띄움
         options.addArguments("--no-sandbox");
         options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
 
@@ -217,6 +217,9 @@ public class KblController {
         headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
 
         try {
+            String[] header = {"YEAR", "MONTH", "DAY", "TEAM", "HOME", "AWAY", "L(0)/W(1)", "PLAYER", "POSITION", "MIN", "1Q", "2Q", "3Q", "4Q", "OT1", "OT2", "TOTAL", "SCORE", "TOT_FGM" , "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB",	"TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF"};
+
+            // No, Name,  Min, Pts, 2PT(M/a) 2pt%, 3pt(M/a), 3pt%, FG(M/A) M/A	%	M/A	%	M/A	%	M/A	%	OR	DR	TOT DK	AST	TO	Stl(v)	BS(BLK v)	PF(v)	FO	PP
             year = "2023";
             String month = "05";
 
@@ -248,78 +251,92 @@ public class KblController {
             System.out.println("Number of con-box elements: " + conBoxCount);
 
             if (conBoxCount > 0) {
-                // 첫 번째 con-box 안의 button.pb 요소 찾기
-                WebElement firstConBox = conBoxElements.get(0);
-                WebElement buttonPb = firstConBox.findElement(By.cssSelector("button.pb"));
+                for(int i=0; i<conBoxCount; i++) {
+                    System.out.println("====> conBox count : " + i);
 
-                // 버튼 클릭
-                buttonPb.click();
-                System.out.println("Clicked the button.pb in the first con-box.");
+                    conBoxElements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("div.contents div.con-box")));
+                    // 첫 번째 con-box 안의 button.pb 요소 찾기
+                    WebElement firstConBox = conBoxElements.get(i);
+                    System.out.println("====> conBox count : 1" + i);
+                    WebElement buttonPb = firstConBox.findElement(By.cssSelector("button.pb"));
+                    System.out.println("====> conBox count : 2" + i);
+                    // 버튼 클릭
+                    buttonPb.click();
+                    System.out.println("Clicked the button.pb in the first con-box.");
 
-                // 특정 요소가 로드될 때까지 기다림
-                WebElement summaryTable = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.summary-table table tbody")));
+                    // 특정 요소가 로드될 때까지 기다림
+                    WebElement summaryTable = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.summary-table table tbody")));
 
-                // 팀별 점수 테이블의 데이터 가져오기
-                List<WebElement> rows = summaryTable.findElements(By.tagName("tr"));
+                    // 팀별 점수 테이블의 데이터 가져오기
+                    List<WebElement> rows = summaryTable.findElements(By.tagName("tr"));
 
-                for (WebElement row : rows) {
-                    List<WebElement> cells = row.findElements(By.tagName("td"));
-                    String team = cells.get(0).getText();
-                    String q1 = cells.get(1).getText();
-                    String q2 = cells.get(2).getText();
-                    String q3 = cells.get(3).getText();
-                    String q4 = cells.get(4).getText();
-                    String eq = cells.get(5).getText();
-                    String total = cells.get(6).getText();
+                    for (WebElement row : rows) {
+                        List<WebElement> cells = row.findElements(By.tagName("td"));
+                        String team = cells.get(0).getText();
+                        String q1 = cells.get(1).getText();
+                        String q2 = cells.get(2).getText();
+                        String q3 = cells.get(3).getText();
+                        String q4 = cells.get(4).getText();
+                        String eq = cells.get(5).getText();
+                        String total = cells.get(6).getText();
 
-                    System.out.println("Team: " + team);
-                    System.out.println("1Q: " + q1);
-                    System.out.println("2Q: " + q2);
-                    System.out.println("3Q: " + q3);
-                    System.out.println("4Q: " + q4);
-                    System.out.println("EQ: " + eq);
-                    System.out.println("TOTAL: " + total);
-                    System.out.println("----------");
-                }
+                        System.out.println("Team: " + team);
+                        System.out.println("1Q: " + q1);
+                        System.out.println("2Q: " + q2);
+                        System.out.println("3Q: " + q3);
+                        System.out.println("4Q: " + q4);
+                        System.out.println("EQ: " + eq);
+                        System.out.println("TOTAL: " + total);
+                        System.out.println("----------");
+                    }
 
-                System.out.println("first table data ===========================");
+                    System.out.println("first table data ===========================");
 
-                // playerDetail 탭을 찾아서 클릭
-                WebElement playerDetailTab = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("ul.tab-style01 li[data-key='playerDetail']")));
-                playerDetailTab.click();
+                    // playerDetail 탭을 찾아서 클릭
+                    WebElement playerDetailTab = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("ul.tab-style01 li[data-key='playerDetail']")));
+                    playerDetailTab.click();
 
-                // archive-team-table01-wrap 클래스가 있는 첫 번째 div 요소 내부의 테이블 데이터 가져오기
+                    // archive-team-table01-wrap 클래스가 있는 첫 번째 div 요소 내부의 테이블 데이터 가져오기
 //            WebElement tableDiv = driver.findElement(By.xpath("(//div[@class='archive-team-table01-wrap'])[1]"));
-                WebElement tableDivFirst = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='archive-team-table01-wrap'])[1]")));
+                    WebElement tableDivFirst = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='archive-team-table01-wrap'])[1]")));
 
-                // tableDiv에서 tbody 안의 모든 텍스트 데이터 가져오기
-                List<WebElement> rowsFirst = tableDivFirst.findElements(By.cssSelector("table tbody tr"));
+                    // tableDiv에서 tbody 안의 모든 텍스트 데이터 가져오기
+                    List<WebElement> rowsFirst = tableDivFirst.findElements(By.cssSelector("table tbody tr"));
 
-                // 각 행을 순회하며 데이터 출력
-                for (WebElement row : rowsFirst) {
-                    List<WebElement> cells = row.findElements(By.tagName("td"));
-                    for (WebElement cell : cells) {
-                        System.out.print(cell.getText() + "\t");
+                    // 각 행을 순회하며 데이터 출력
+                    for (WebElement row : rowsFirst) {
+                        List<WebElement> cells = row.findElements(By.tagName("td"));
+                        for (WebElement cell : cells) {
+                            System.out.print(cell.getText() + "\t");
+                        }
+                        System.out.println(); // 다음 줄로 넘어감
                     }
-                    System.out.println(); // 다음 줄로 넘어감
-                }
 
-                System.out.println("second table data ===========================");
+                    System.out.println("second table data ===========================");
 
-                WebElement tableDivSecond = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='archive-team-table01-wrap'])[2]")));
+                    WebElement tableDivSecond = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("(//div[@class='archive-team-table01-wrap'])[2]")));
 
-                // tableDiv에서 tbody 안의 모든 텍스트 데이터 가져오기
-                List<WebElement> rowsSecond = tableDivSecond.findElements(By.cssSelector("table tbody tr"));
+                    // tableDiv에서 tbody 안의 모든 텍스트 데이터 가져오기
+                    List<WebElement> rowsSecond = tableDivSecond.findElements(By.cssSelector("table tbody tr"));
 
-                // 각 행을 순회하며 데이터 출력
-                for (WebElement row : rowsSecond) {
-                    List<WebElement> cells = row.findElements(By.tagName("td"));
-                    for (WebElement cell : cells) {
-                        System.out.print(cell.getText() + "\t");
+                    // 각 행을 순회하며 데이터 출력
+                    for (WebElement row : rowsSecond) {
+                        List<WebElement> cells = row.findElements(By.tagName("td"));
+                        for (WebElement cell : cells) {
+                            System.out.print(cell.getText() + "\t");
+                        }
+                        System.out.println(); // 다음 줄로 넘어감
                     }
-                    System.out.println(); // 다음 줄로 넘어감
-                }
 
+                    driver.navigate().back();
+
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
             } else {
                 System.out.println("No con-box elements found.");
             }
@@ -391,9 +408,9 @@ public class KblController {
                 System.out.println("날짜 수: " + divElements.size());
 
 //                String[] header = {"Year", "Month", "Day", "Attendance", "TEAM", "HOME (홈)", "AWAY (어웨이)", "L(0)/W(1)", "PLAYER", "MIN", "Q1", "Q2", "Q3", "Q4", "OT1", "OT2", "FINAL", "TOT_FGM", "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB", "TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF", "PTS", "+/-"};
-                String[] header = {"YEAR", "MONTH", "DAY", "TEAM", "HOME", "AWAY", "L(0)/W(1)", "PLAYER", "POSITION", "MIN", "1Q", "2Q", "3Q", "4Q", "OT1", "OT2", "TOTAL", "SCORE", "TOT_FGM" , "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB",	"TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF"};
-                JavascriptExecutor js = (JavascriptExecutor) driver;
 
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+                String[] header = {"YEAR", "MONTH", "DAY", "TEAM", "HOME", "AWAY", "L(0)/W(1)", "PLAYER", "POSITION", "MIN", "1Q", "2Q", "3Q", "4Q", "OT1", "OT2", "TOTAL", "SCORE", "TOT_FGM" , "TOT_FGA", "TOT_FG%", "TOT_3PM", "TOT_3PA", "TOT_3P%", "TOT_FTM", "TOT_FTA", "TOT_FT%", "TOT_OREB", "TOT_DREB", "TOT_REB",	"TOT_AST", "TOT_STL", "TOT_BLK", "TOT_TO", "TOT_PF", "TOT_PTS", "TOT_+/-", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TO", "PF"};
                 Sheet sheet = workbook.createSheet("KBL GAMES");
                 Row excelRow = sheet.createRow(0);
                 for (int i=0; i< header.length; i++) {
