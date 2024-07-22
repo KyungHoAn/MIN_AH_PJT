@@ -67,7 +67,7 @@ public class MainController {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
         workbook = new XSSFWorkbook();
 
-        System.out.println("[NBA Official game download start");
+        System.out.println("[NBA Official game download start]");
         headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
 
         try {
@@ -112,8 +112,15 @@ public class MainController {
                     System.out.println("num: "+i);
                     excelList.add(cellData);
                 }
+
                 WebElement nextPageButtonFind = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
                 nextPageButtonFind.click();
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 try {
                     nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
