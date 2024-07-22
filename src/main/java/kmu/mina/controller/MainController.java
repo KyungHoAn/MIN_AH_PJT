@@ -117,7 +117,7 @@ public class MainController {
                 nextPageButtonFind.click();
 
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -176,7 +176,7 @@ public class MainController {
             e.printStackTrace();
         }
 
-        System.out.println("[NBA Official year 데이터 다운로드]");
+        System.out.println("[NBA Official year 데이터 다운로드 > update 2]");
         headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
