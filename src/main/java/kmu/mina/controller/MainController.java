@@ -6,10 +6,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -44,7 +41,7 @@ public class MainController {
     @PostMapping("nbaOfficialYear")
     public ResponseEntity<InputStreamResource> getNbaOfficialYear(@RequestParam("officialYear") String year) throws Exception {
         System.out.println("[NBA Official year 데이터 다운로드 PART]");
-        System.out.println("year: "+year);
+        System.out.println("year: " + year);
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -64,21 +61,20 @@ public class MainController {
 
         driver.get("https://www.nba.com/stats/leaders?SeasonType=Regular+Season&PerMode=Totals");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         workbook = new XSSFWorkbook();
 
         System.out.println("[NBA Official game download start]");
-        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+        headers.add("Content-Disposition", "attachment; filename=" + year + ".xlsx");
 
         try {
             System.out.println("예외처리");
-//            PLAYER	TEAM	GP	MIN	PTS	FGM	FGA	FG%	3PM	3PA	3P%	FTM	FTA	FT%	OREB	DREB	REB	AST	STL	BLK	TOV	PF	EFF	AST/TOV	STL/TOV
-            String[] header = {"NUMBER","PLAYER","TEAM","GP","MIN","PTS","FGM","FGA","FG%","3PM","3PA","3P%","FTM","FTA","FT%","OREB","DREB","REB","AST","STL","BLK","TOV","PF","EFF","AST/TOV","STL/TOV"};
+            String[] header = {"NUMBER", "PLAYER", "TEAM", "GP", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "EFF", "AST/TOV", "STL/TOV"};
 
             Sheet sheet = workbook.createSheet("KBL Official_YEAR");
             Row excelRow = sheet.createRow(0);
 
-            for(int i=0; i<header.length; i++) {
+            for (int i = 0; i < header.length; i++) {
                 Cell cell = excelRow.createCell(i);
                 cell.setCellValue(header[i]);
             }
@@ -91,43 +87,74 @@ public class MainController {
 
             WebElement nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
 
-            System.out.println("nextPageButton : "+nextPageButton.isEnabled());
-            while (isNextPageButtonEnabled(nextPageButton)) {
-                WebElement tbody;
-                try {
-                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
-                } catch (org.openqa.selenium.StaleElementReferenceException e) {
-                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
-                }
+            System.out.println("nextPageButton : " + nextPageButton.isEnabled());
+            while (nextPageButton.isEnabled()) {
+                WebElement tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
 
                 List<WebElement> rows = tbody.findElements(By.tagName("tr"));
                 for (WebElement row : rows) {
-                    List<WebElement> cells = row.findElements(By.tagName("td"));
+                    List<WebElement> cells;
+                    try {
+                        cells = row.findElements(By.tagName("td"));
+                    } catch (StaleElementReferenceException e) {
+                        tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+                        rows = tbody.findElements(By.tagName("tr"));
+                        continue;
+                    }
+
                     String[] cellData = new String[header.length];
-                    int i=0;
+                    int i = 0;
                     for (WebElement cell : cells) {
                         cellData[i] = cell.getText();
                         i++;
                     }
-                    System.out.println("num: "+i);
+                    System.out.println("num: " + i);
                     excelList.add(cellData);
                 }
 
+                System.out.println("=====> page button search > ");
                 WebElement nextPageButtonFind = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
                 nextPageButtonFind.click();
+                System.out.println("=====> page button search end> ");
 
+//                try {
+//                    wait.until(ExpectedConditions.stalenessOf(nextPageButtonFind));
+//                } catch (org.openqa.selenium.TimeoutException ex) {
+//                    break;
+//                }
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
-                try {
-                    nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
-                } catch (org.openqa.selenium.TimeoutException ex) {
-                    break;
+                // 새 페이지에서 Next Page Button 확인
+//                try {
+//                    nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+//                } catch (org.openqa.selenium.TimeoutException ex) {
+//                    break;
+//                }
+                // 새 페이지에서 Next Page Button 확인
+                int attempts = 0;
+                while (attempts < 3) {
+                    try {
+                        nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+                        break; // 버튼을 찾았으면 루프를 종료
+                    } catch (org.openqa.selenium.TimeoutException ex) {
+                        attempts++;
+                        Thread.sleep(2000); // 2초 대기 후 다시 시도
+                    }
+                }
+
+                System.out.println("=> button roof info ");
+                System.out.println(nextPageButton.isEnabled());
+                if (attempts == 3) {
+                    System.out.println("no search button");
+                    break; // 3번 시도 후에도 찾지 못하면 루프 종료
                 }
             }
+
+            System.out.println("second >");
 
             try {
                 Thread.sleep(5000);
@@ -151,15 +178,15 @@ public class MainController {
                     cellData[i] = cell.getText();
                     i++;
                 }
-                System.out.println("num : "+i);
+                System.out.println("num : " + i);
                 excelList.add(cellData);
             }
 
             int rowNum = 1;
-            for(String[] rowData : excelList){
+            for (String[] rowData : excelList) {
                 Row row = sheet.createRow(rowNum++);
                 int colNum = 0;
-                for(String cellData : rowData) {
+                for (String cellData : rowData) {
                     Cell cell = row.createCell(colNum++);
                     cell.setCellValue(cellData);
                 }
@@ -172,12 +199,12 @@ public class MainController {
             }
 
         } catch (Exception e) {
-            System.out.println("[ERROR] :" + e.getMessage());
+            System.out.println("[ERROR] ::" + e.getMessage());
             e.printStackTrace();
         }
 
         System.out.println("[NBA Official year 데이터 다운로드 > update 2]");
-        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+        headers.add("Content-Disposition", "attachment; filename=" + year + ".xlsx");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
@@ -191,6 +218,219 @@ public class MainController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(new InputStreamResource(in));
     }
+
+    private static boolean isNextPageButtonEnabled(WebElement nextPageButton) {
+        try {
+            return nextPageButton.isEnabled();
+        } catch (StaleElementReferenceException e) {
+            return false;
+        }
+    }
+
+    private static boolean isNextPageButtonPresent(WebDriver driver) {
+        try {
+            driver.findElement(By.xpath("//button[@title='Next Page Button']"));
+            return true;
+        } catch (org.openqa.selenium.NoSuchElementException e) {
+            return false;
+        }
+    }
+
+//    public ResponseEntity<InputStreamResource> getNbaOfficialYear(@RequestParam("officialYear") String year) throws Exception {
+//        System.out.println("[NBA Official year 데이터 다운로드 PART]");
+//        System.out.println("year: "+year);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//
+//        Workbook workbook = null;
+//        System.setProperty("webdriver.chrome.driver", driverPath);
+//        ChromeOptions options = new ChromeOptions();
+//
+//        options.addArguments("--remote-allow-origins=*");
+//        options.addArguments("--disable-popup-blocking");
+//        options.addArguments("--disable-gpu");
+//        options.addArguments("--disable-images");
+//        options.addArguments("headless");
+//        options.addArguments("--no-sandbox");
+//        options.addArguments("--blink-settings=imagesEnabled=false");
+//
+//        WebDriver driver = new ChromeDriver(options);
+//
+//        driver.get("https://www.nba.com/stats/leaders?SeasonType=Regular+Season&PerMode=Totals");
+//
+//        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
+//        workbook = new XSSFWorkbook();
+//
+//        System.out.println("[NBA Official game download start]");
+//        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+//
+//        try {
+//            System.out.println("예외처리");
+////            PLAYER	TEAM	GP	MIN	PTS	FGM	FGA	FG%	3PM	3PA	3P%	FTM	FTA	FT%	OREB	DREB	REB	AST	STL	BLK	TOV	PF	EFF	AST/TOV	STL/TOV
+//            String[] header = {"NUMBER","PLAYER","TEAM","GP","MIN","PTS","FGM","FGA","FG%","3PM","3PA","3P%","FTM","FTA","FT%","OREB","DREB","REB","AST","STL","BLK","TOV","PF","EFF","AST/TOV","STL/TOV"};
+//
+//            Sheet sheet = workbook.createSheet("KBL Official_YEAR");
+//            Row excelRow = sheet.createRow(0);
+//
+//            for(int i=0; i<header.length; i++) {
+//                Cell cell = excelRow.createCell(i);
+//                cell.setCellValue(header[i]);
+//            }
+//
+//            List<String[]> excelList = new ArrayList<>();
+//
+//            WebElement firstSelectElement = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("select.DropDown_select__4pIg9")));
+//            Select select = new Select(firstSelectElement);
+//            select.selectByVisibleText(year);
+//
+//            WebElement nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+//
+//            System.out.println("nextPageButton : "+nextPageButton.isEnabled());
+//            while (isNextPageButtonEnabled(nextPageButton)) {
+//                WebElement tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+////                try {
+////                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+////                } catch (org.openqa.selenium.StaleElementReferenceException e) {
+////                    System.out.println(" this error ? ");
+////                    tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+////                }
+//
+//
+//                // 각 행(tr)의 각 열(td)을 순회하며 데이터 출력
+//                List<WebElement> rows = tbody.findElements(By.tagName("tr"));
+//                for (WebElement row : rows) {
+//                    List<WebElement> cells;
+//                    try {
+//                        cells = row.findElements(By.tagName("td"));
+//                    } catch (StaleElementReferenceException e) {
+//                        tbody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+//                        rows = tbody.findElements(By.tagName("tr"));
+//                        continue;
+//                    }
+//
+//                    String[] cellData = new String[header.length];
+//                    int i = 0;
+//                    for (WebElement cell : cells) {
+//                        cellData[i] = cell.getText();
+//                        i++;
+//                    }
+//                    System.out.println("num: " + i);
+//                    excelList.add(cellData);
+//                }
+//
+//
+////                List<WebElement> rows = tbody.findElements(By.tagName("tr"));
+////                for (WebElement row : rows) {
+////                    List<WebElement> cells = row.findElements(By.tagName("td"));
+////                    String[] cellData = new String[header.length];
+////                    int i=0;
+////                    for (WebElement cell : cells) {
+////                        cellData[i] = cell.getText();
+////                        i++;
+////                    }
+////                    System.out.println("num: "+i);
+////                    excelList.add(cellData);
+////                }
+//
+//                System.out.println("=====> page button search > ");
+//                WebElement nextPageButtonFind = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+//                nextPageButtonFind.click();
+//                System.out.println("=====> page button search end> ");
+//
+//                wait.until(ExpectedConditions.stalenessOf(nextPageButton));
+//
+//
+//                // 새 페이지에서 Next Page Button 확인
+////                if (!isNextPageButtonPresent(driver)) {
+////                    break;
+////                }
+//                try {
+//                    Thread.sleep(5000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                try {
+//                    nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Next Page Button']")));
+//                } catch (org.openqa.selenium.TimeoutException ex) {
+//                    break;
+//                }
+//            }
+//
+//            System.out.println("second >");
+//
+//            try {
+//                Thread.sleep(5000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//            WebElement tbodyLast;
+//            try {
+//                tbodyLast = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+//            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+//                tbodyLast = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(@class, 'Crom_container__C45Ti')]/table[contains(@class, 'Crom_table__p1iZz')]/tbody[contains(@class, 'Crom_body__UYOcU')]")));
+//            }
+//
+//            List<WebElement> rows = tbodyLast.findElements(By.tagName("tr"));
+//            for (WebElement row : rows) {
+//                List<WebElement> cells = row.findElements(By.tagName("td"));
+//                String[] cellData = new String[header.length];
+//                int i = 0;
+//                for (WebElement cell : cells) {
+//                    cellData[i] = cell.getText();
+//                    i++;
+//                }
+//                System.out.println("num : "+i);
+//                excelList.add(cellData);
+//            }
+//
+//            int rowNum = 1;
+//            for(String[] rowData : excelList){
+//                Row row = sheet.createRow(rowNum++);
+//                int colNum = 0;
+//                for(String cellData : rowData) {
+//                    Cell cell = row.createCell(colNum++);
+//                    cell.setCellValue(cellData);
+//                }
+//            }
+//
+//            try {
+//                Thread.sleep(3000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//        } catch (Exception e) {
+//            System.out.println("[ERROR] ::" + e.getMessage());
+//            e.printStackTrace();
+//        }
+//
+//        System.out.println("[NBA Official year 데이터 다운로드 > update 2]");
+//        headers.add("Content-Disposition", "attachment; filename="+year+".xlsx");
+//
+//        ByteArrayOutputStream out = new ByteArrayOutputStream();
+//        workbook.write(out);
+//        out.flush();
+//        out.close();
+//        workbook.close();
+//
+//        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+//        return ResponseEntity.ok()
+//                .headers(headers)
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                .body(new InputStreamResource(in));
+//    }
+
+
+//        private static boolean isNextPageButtonPresent(WebDriver driver) {
+//            try {
+//                driver.findElement(By.xpath("//button[@title='Next Page Button']"));
+//                return true;
+//            } catch (org.openqa.selenium.NoSuchElementException e) {
+//                return false;
+//            }
+//        }
 
     @PostMapping("/nbaPlayerTotalYear")
     public ResponseEntity<InputStreamResource> getNbaPlayerTotalYear(@RequestParam("playerYear") String year) throws Exception {
@@ -355,11 +595,11 @@ public class MainController {
                 .body(new InputStreamResource(in));
     }
 
-    private static boolean isNextPageButtonEnabled(WebElement nextPageButton) {
-        // Next Page Button의 disabled 속성이 없으면 enabled 상태로 판단
-        String disabledAttribute = nextPageButton.getAttribute("disabled");
-        return disabledAttribute == null || !disabledAttribute.equals("true");
-    }
+//    private static boolean isNextPageButtonEnabled(WebElement nextPageButton) {
+//         Next Page Button의 disabled 속성이 없으면 enabled 상태로 판단
+//        String disabledAttribute = nextPageButton.getAttribute("disabled");
+//        return disabledAttribute == null || !disabledAttribute.equals("true");
+//    }
 
     @GetMapping("/gameMonthData")
     @ResponseBody
