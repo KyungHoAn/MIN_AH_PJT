@@ -2,12 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NBA</title>
+    <title>NBA/KBL</title>
 </head>
 <body>
 
-<!--<h1>NBA 농구 데이터 다운로드</h1>-->
+<h1>농구 데이터 다운로드</h1>
 <br>
+<hr style="height: 3px;">
+<h3 style="color: mediumpurple">KBL renewal player data download :</h3>
+<form action="#" th:action="@{/kblPlayerRenewalYear}" method="post">
+<!--    <label for="officialYear">KBL renewal player data download :</label>-->
+<!--    <input type="text" id="officialYear" name="officialYear" placeholder="2023-24"/>-->
+    <select name="kblRenewalYear"><option value="43">2023-2024</option><option value="41">2022-2023</option><option value="39">2021-2022</option><option value="37">2020-2021</option><option value="35">2019-2020</option><option value="33">2018-2019</option><option value="31">2017-2018</option><option value="29">2016-2017</option><option value="27">2015-2016</option><option value="25">2014-2015</option><option value="23">2013-2014</option><option value="21">2012-2013</option><option value="19">2011-2012</option><option value="17">2010-2011</option><option value="15">2009-2010</option><option value="13">2008-2009</option><option value="12">2007-2008</option><option value="11">2006-2007</option><option value="10">2005-2006</option><option value="9">2004-2005</option><option value="8">2003-2004</option><option value="7">2002-2003</option><option value="6">2001-2002</option><option value="5">2000-2001</option><option value="4">1999-2000</option><option value="3">1998-1999</option><option value="2">1997-1998</option><option value="1">1997</option></select>
+    <button type="submit">Submit</button>
+</form>
+
 <!--    <h3>#1 농구 데이터 다운로드</h3>-->
 <!--    <form action="#" th:action="@{/mina}" method="post">-->
 <!--        <label for="year">NBA 년도:</label>-->
@@ -42,77 +51,77 @@
 <!--        <button type="submit">Submit</button>-->
 <!--    </form>-->
 
-<br>
-<hr>
-<h3>(PLAYER) GAME DATA DOWNLOAD</h3>
-<form action="#" th:action="@{/gameData}" method="post">
-    <label for="year4">NBA GAME DATA DOWN :</label>
-    <input type="text" id="year4" name="year4" placeholder="2010-01-01"/>
-    <button type="submit">Submit</button>
-</form>
+<!--<br>-->
+<!--<hr>-->
+<!--<h3>(PLAYER) GAME DATA DOWNLOAD</h3>-->
+<!--<form action="#" th:action="@{/gameData}" method="post">-->
+<!--    <label for="year4">NBA GAME DATA DOWN :</label>-->
+<!--    <input type="text" id="year4" name="year4" placeholder="2010-01-01"/>-->
+<!--    <button type="submit">Submit</button>-->
+<!--</form>-->
 
-<br>
-<hr>
-<h3>(MONTH - PLAYER) GAME DATA DOWNLOAD</h3>
-<!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
-<form id="monthForm">
-    <label for="year5">NBA GAME DATA DOWN :</label>
-    <input type="text" id="year5" name="year5" placeholder="2010-01"/>
-    <!--        <label for="day">DAY :</label>-->
-    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>
-    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>
-    <button id="monthBtn" type="button">Submit</button>
-</form>
-
-<br>
-<hr style="border: 0; height: 3px;">
-<h3 style="color: deepskyblue">KBL 네이버 농구 GAME DATA DOWNLOAD</h3>
-<!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
-<!--<form id="kblForm">-->
-<form action="#" th:action="@{/kblGameDownload}" method="post">
-    <label for="kblYear">KBL 네이버 농구 GAME DATA DOWN :</label>
-    <input type="text" id="kblYear" name="kblYear" placeholder="2023-01"/>
+<!--<br>-->
+<!--<hr>-->
+<!--<h3>(MONTH - PLAYER) GAME DATA DOWNLOAD</h3>-->
+<!--&lt;!&ndash;    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">&ndash;&gt;-->
+<!--<form id="monthForm">-->
+<!--    <label for="year5">NBA GAME DATA DOWN :</label>-->
+<!--    <input type="text" id="year5" name="year5" placeholder="2010-01"/>-->
+<!--    &lt;!&ndash;        <label for="day">DAY :</label>&ndash;&gt;-->
 <!--    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>-->
 <!--    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>-->
-    <button id="kblBtn" type="submit">Submit</button>
-</form>
+<!--    <button id="monthBtn" type="button">Submit</button>-->
+<!--</form>-->
 
-<br>
-<h3 style="color: deepskyblue">[미완성] KBL 공식 홈페이지 GAME DATA DOWNLOAD</h3>
-<!--    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">-->
-<!--<form id="kblForm">-->
-<form action="#" th:action="@{/kblMainDownload}" method="post">
-    <div>KBL 공식 홈페이지 다운로드 : 미완성 </div>
-<!--    <label for="kblMainYear">KBL 공식 홈페이지 다운로드 :</label>-->
-<!--    <input type="text" id="kblMainYear" name="kblMainYear" placeholder="2023-01"/>-->
-<!--    <button id="kblMainBtn" type="submit">Submit</button>-->
-</form>
-
-<hr style="height: 3px;">
-<h1>년도별 선수 총합 다운로드 PART</h1>
+<!--<br>-->
 <!--<hr style="border: 0; height: 3px;">-->
-<h3 style="color: darkred">NBA 선수별 년도 총계 데이터 DOWNLOAD</h3>
-<form action="#" th:action="@{/nbaPlayerTotalYear}" method="post">
-    <label for="playerYear">NBA 공식 홈페이지 다운로드 :</label>
-    <input type="text" id="playerYear" name="playerYear" placeholder="2023-24"/>
-    <button type="submit">Submit</button>
-</form>
+<!--<h3 style="color: deepskyblue">KBL 네이버 농구 GAME DATA DOWNLOAD</h3>-->
+<!--&lt;!&ndash;    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">&ndash;&gt;-->
+<!--&lt;!&ndash;<form id="kblForm">&ndash;&gt;-->
+<!--<form action="#" th:action="@{/kblGameDownload}" method="post">-->
+<!--    <label for="kblYear">KBL 네이버 농구 GAME DATA DOWN :</label>-->
+<!--    <input type="text" id="kblYear" name="kblYear" placeholder="2023-01"/>-->
+<!--&lt;!&ndash;    <input type="text" id="day" name="day" placeholder="ex) 31 (일자 입력)"/>&ndash;&gt;-->
+<!--&lt;!&ndash;    <input type="text" id="startNumber" name="startNumber" placeholder="시작일자 입력"/>&ndash;&gt;-->
+<!--    <button id="kblBtn" type="submit">Submit</button>-->
+<!--</form>-->
 
-<h3 style="color: darkred">KBL 선수별 년도 총계 데이터 DOWNLOAD</h3>
-<form action="#" th:action="@{/kblPlayerTotalYear}" method="post">
-    <label for="kblPlayerYear">KBL 공식 홈페이지 다운로드 :</label>
-    <input type="text" id="kblPlayerYear" name="kblPlayerYear" placeholder="2023-2024"/>
-    <button type="submit">Submit</button>
-</form>
-<br>
+<!--<br>-->
+<!--<h3 style="color: deepskyblue">[미완성] KBL 공식 홈페이지 GAME DATA DOWNLOAD</h3>-->
+<!--&lt;!&ndash;    <form id="monthForm" action="#" th:action="@{/gameMonthData}" method="post">&ndash;&gt;-->
+<!--&lt;!&ndash;<form id="kblForm">&ndash;&gt;-->
+<!--<form action="#" th:action="@{/kblMainDownload}" method="post">-->
+<!--    <div>KBL 공식 홈페이지 다운로드 : 미완성 </div>-->
+<!--&lt;!&ndash;    <label for="kblMainYear">KBL 공식 홈페이지 다운로드 :</label>&ndash;&gt;-->
+<!--&lt;!&ndash;    <input type="text" id="kblMainYear" name="kblMainYear" placeholder="2023-01"/>&ndash;&gt;-->
+<!--&lt;!&ndash;    <button id="kblMainBtn" type="submit">Submit</button>&ndash;&gt;-->
+<!--</form>-->
 
-<hr style="height: 3px;">
-<h3 style="color: mediumpurple">NBA Official year 데이터 다운로드</h3>
-<form action="#" th:action="@{/nbaOfficialYear}" method="post">
-    <label for="officialYear">NBA Official year 데이터 다운로드:</label>
-    <input type="text" id="officialYear" name="officialYear" placeholder="2023-24"/>
-    <button type="submit">Submit</button>
-</form>
+<!--<hr style="height: 3px;">-->
+<!--<h1>년도별 선수 총합 다운로드 PART</h1>-->
+<!--&lt;!&ndash;<hr style="border: 0; height: 3px;">&ndash;&gt;-->
+<!--<h3 style="color: darkred">NBA 선수별 년도 총계 데이터 DOWNLOAD</h3>-->
+<!--<form action="#" th:action="@{/nbaPlayerTotalYear}" method="post">-->
+<!--    <label for="playerYear">NBA 공식 홈페이지 다운로드 :</label>-->
+<!--    <input type="text" id="playerYear" name="playerYear" placeholder="2023-24"/>-->
+<!--    <button type="submit">Submit</button>-->
+<!--</form>-->
+
+<!--<h3 style="color: darkred">KBL 선수별 년도 총계 데이터 DOWNLOAD</h3>-->
+<!--<form action="#" th:action="@{/kblPlayerTotalYear}" method="post">-->
+<!--    <label for="kblPlayerYear">KBL 공식 홈페이지 다운로드 :</label>-->
+<!--    <input type="text" id="kblPlayerYear" name="kblPlayerYear" placeholder="2023-2024"/>-->
+<!--    <button type="submit">Submit</button>-->
+<!--</form>-->
+<!--<br>-->
+
+<!--<hr style="height: 3px;">-->
+<!--<h3 style="color: mediumpurple">NBA Official year 데이터 다운로드</h3>-->
+<!--<form action="#" th:action="@{/nbaOfficialYear}" method="post">-->
+<!--    <label for="officialYear">NBA Official year 데이터 다운로드:</label>-->
+<!--    <input type="text" id="officialYear" name="officialYear" placeholder="2023-24"/>-->
+<!--    <button type="submit">Submit</button>-->
+<!--</form>-->
 
 </body>
 <script src="https://code.jquery.com/jquery-2.2.4.min.js"

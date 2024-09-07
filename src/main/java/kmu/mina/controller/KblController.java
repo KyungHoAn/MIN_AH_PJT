@@ -1,5 +1,7 @@
 package kmu.mina.controller;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -35,10 +37,136 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
+@Slf4j
 public class KblController {
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
 
+    @PostMapping("/kblPlayerRenewalYear")
+    public ResponseEntity<InputStreamResource>getKblRenewalYear(@RequestParam("kblRenewalYear") String year) throws Exception {
+        log.info("KBL Renewal player data download code : {} ", year);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        Workbook workbook = null;
+        System.setProperty("webdriver.chrome.driver", driverPath);
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-popup-blocking");       // 팝업안띄움
+        options.addArguments("--disable-gpu");                  // gpu 비활성화
+        options.addArguments("--disable-images");
+        options.addArguments("headless");                       // 브라우저 안띄움
+        options.addArguments("--no-sandbox");
+        options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지 다운 안받음
+
+        WebDriver driver = new ChromeDriver(options);
+
+        driver.get("https://kbl.or.kr/record/player");
+
+        WebElement seasonSelectElement = driver.findElement(By.xpath("//div[@class='filter-wrap ']//select[1]"));
+        Select seasonSelect = new Select(seasonSelectElement);
+        seasonSelect.selectByValue(year);
+
+        String selectedSeasonText = seasonSelect.getFirstSelectedOption().getText();
+        System.out.println("선택된 시즌 : " + selectedSeasonText);
+
+//        //  정규시즌
+//        WebElement gameTypeSelectElement = driver.findElement(By.xpath("//div[@class='filter-wrap ']//select[2]"));
+//        Select gameTypeSelect = new Select(gameTypeSelectElement);
+//        gameTypeSelect.selectByValue("01,03,04");  // value가 "01,03,04"인 옵션 선택 (정규시즌)
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
+        workbook = new XSSFWorkbook();
+
+        System.out.println("KBL game download start");
+
+        try {
+            String[] header= {"Num", "PLAYER", "GP", "W", "L", "MIN","PTS", "2PM", "2PA","2P%", "3PM", "3PA","3P%","FGM","FGA", "FG%", "FTM", "FTA","FT%", "OREB","DREB", "REB", "AST", "STL", "BLK", "GD","DK", "DKA","TO","PF", "PP", "PPA", "PP%", "+/-", "DD2","TD3"};
+//            #	팀/선수	GP	W	L	MIN	PTS	2PM	2PA	2P%	3PM	3PA	3P%	FGM	FGA	FG%	FTM	FTA	FT%	OREB	DREB	REB	AST	STL	BLK	GD	DK	DKA	TO	PF	PP	PPA	PP%	+/-	DD2	TD3
+            Sheet sheet = workbook.createSheet("KBL PLAYER");
+            Row excelRow = sheet.createRow(0);
+
+            for(int i=0; i<header.length; i++) {
+                Cell cell = excelRow.createCell(i);
+                cell.setCellValue(header[i]);
+            }
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            List<String[]> excelList = new ArrayList<>();
+
+            boolean hasNextPage = true;
+
+            while(hasNextPage) {
+                WebElement tableBody = driver.findElement(By.cssSelector(".record-table1 tbody"));
+                List<WebElement> rows = tableBody.findElements(By.tagName("tr"));
+
+                for (WebElement row : rows) {
+                    List<WebElement> columns = row.findElements(By.tagName("td"));
+                    String[] cellData = new String[header.length];
+                    int i=0;
+                    for (WebElement column : columns) {
+//                        System.out.print(column.getText() + " ");
+                        cellData[i] = column.getText();
+                        i++;
+                    }
+//                    System.out.println();
+                    excelList.add(cellData);
+                }
+
+                WebElement nextButton = driver.findElement(By.cssSelector("button[title='다음 페이지']"));
+
+                String isDisabled = nextButton.getAttribute("disabled");
+                if (isDisabled != null && isDisabled.equals("true")) {
+                    hasNextPage = false;
+                    System.out.println("다음 페이지가 없습니다. 종료합니다.");
+                } else {
+                    nextButton.click();
+                }
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            int rowNum = 1;
+            for(String[] data : excelList) {
+                Row row = sheet.createRow(rowNum++);
+                int colNum = 0;
+                for(String colum : data) {
+                    Cell cell = row.createCell(colNum++);
+                    cell.setCellValue(colum);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("[ERROR] : {}", e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+
+        System.out.println("===> excel download stop point > ");
+        headers.add("Content-Disposition", "attachment; filename=\""+selectedSeasonText+"\".xlsx");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        out.flush();
+        out.close();
+        workbook.close();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
 
     @PostMapping("/kblPlayerTotalYear")
     public ResponseEntity<InputStreamResource> getKblPlayerTotalYear(@RequestParam("kblPlayerYear") String year) throws Exception {
