@@ -1,11 +1,7 @@
 package kmu.mina.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -24,15 +20,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,9 +31,121 @@ import java.util.regex.Pattern;
 public class KblController {
 
     private final String driverPath = new File("src/main/resources/driver/chromedriver.exe").getAbsolutePath();
+    private final String inputPath = new File("src/main/resources/file/input.xlsx").getAbsolutePath();
+    private final String outputPath = new File("src/main/resources/file/output.xlsx").getAbsolutePath();
+
+    @PostMapping("/teamDataDownload")
+    public ResponseEntity<InputStreamResource> updateTeamData() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        List<List<String>> inputExcelData = new ArrayList<>();
+        List<List<String>> outputExcelData = new ArrayList<>();
+
+        File file = new File(inputPath);
+        try (FileInputStream fis = new FileInputStream(file); Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for(Row row : sheet) {
+                Cell firstCell = row.getCell(0);
+
+                if (firstCell == null || firstCell.getCellType() == CellType.BLANK || getCellValueAsString(firstCell).trim().isEmpty()) {
+                    continue;
+                }
+
+                List<String> rowData = new ArrayList<>();
+                for(Cell cell : row) {
+                    rowData.add(getCellValueAsString(cell));
+                }
+                inputExcelData.add(rowData);
+            }
+        }
+
+        File file2 = new File(outputPath);
+
+        try (FileInputStream fis = new FileInputStream(file2); Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for(Row row : sheet) {
+                Cell firstCell = row.getCell(0);
+
+                if (firstCell == null || firstCell.getCellType() == CellType.BLANK || getCellValueAsString(firstCell).trim().isEmpty()) {
+                    continue;
+                }
+
+                List<String> rowData = new ArrayList<>();
+                for(Cell cell : row) {
+                    rowData.add(getCellValueAsString(cell));
+                }
+                if (rowData.size() > 1) {
+                    rowData.add(3, "");
+                }
+                outputExcelData.add(rowData);
+            }
+        }
+
+        for(List<String> row : outputExcelData) {
+            String outputPlayerName = row.get(2);
+            String outputPlyaerYear = row.get(0).substring(0, 4);
+            for (List<String> inputRow : inputExcelData) {
+                String inputPlayerName = inputRow.get(2);
+                String inputPlayerYear = inputRow.get(0).substring(0,4);
+                if(outputPlayerName.equals(inputPlayerName) && outputPlyaerYear.equals(inputPlayerYear)) {
+                    String teamName = inputRow.get(3);
+                    row.set(3, teamName);
+                    break;
+                }
+            }
+        }
+
+        Workbook newWorkbook = new XSSFWorkbook();
+        Sheet newSheet = newWorkbook.createSheet("KBL");
+
+        int rowNum = 0;
+        for(List<String> row : outputExcelData) {
+            Row newRow = newSheet.createRow(rowNum++);
+            int colNum = 0;
+            for(String cellData : row) {
+                Cell cell = newRow.createCell(colNum++);
+                cell.setCellValue(cellData);
+            }
+        }
+
+        headers.add("Content-Disposition", "attachment; filename=KBLTeamData.xlsx");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        newWorkbook.write(out);
+        out.flush();
+        out.close();
+        newWorkbook.close();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
+
+    private String getCellValueAsString(Cell cell) {
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
+        }
+    }
 
     @PostMapping("/kblPlayerRenewalYear")
-    public ResponseEntity<InputStreamResource>getKblRenewalYear(@RequestParam("kblRenewalYear") String year) throws Exception {
+    public ResponseEntity<InputStreamResource> getKblRenewalYear(@RequestParam("kblRenewalYear") String year) throws Exception {
         log.info("KBL Renewal player data download code : {} ", year);
 
         HttpHeaders headers = new HttpHeaders();
@@ -76,10 +178,7 @@ public class KblController {
 //        Select gameTypeSelect = new Select(gameTypeSelectElement);
 //        gameTypeSelect.selectByValue("01,03,04");  // value가 "01,03,04"인 옵션 선택 (정규시즌)
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(7));
         workbook = new XSSFWorkbook();
-
-        System.out.println("KBL game download start");
 
         try {
             String[] header= {"Num", "PLAYER", "GP", "W", "L", "MIN","PTS", "2PM", "2PA","2P%", "3PM", "3PA","3P%","FGM","FGA", "FG%", "FTM", "FTA","FT%", "OREB","DREB", "REB", "AST", "STL", "BLK", "GD","DK", "DKA","TO","PF", "PP", "PPA", "PP%", "+/-", "DD2","TD3"};
